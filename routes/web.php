@@ -269,3 +269,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin|staff'])->name('admin.')
     Route::delete('/support/{id}', [AdminSupportController::class, 'destroy'])->name('support.delete');
 });
 
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::resource('categories',AdminCategoryController::class);
+});

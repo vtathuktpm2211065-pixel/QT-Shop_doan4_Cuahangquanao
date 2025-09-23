@@ -97,12 +97,7 @@
         <p>Danh mục</p>
       </a>
     </li>
-    <li class="nav-item">
-      <a href="{{ route('admin.reviews.index') }}" class="nav-link">
-        <i class="far fa-circle nav-icon"></i>
-        <p>Đánh giá sản phẩm</p>
-      </a>
-    </li>
+    
   </ul>
 </li> 
         <li class="nav-item">
@@ -133,7 +128,7 @@
             <p>Quản lý đánh giá</p>
           </a>
         </li>
-     
+
       </ul>
     </nav>
   </div>
