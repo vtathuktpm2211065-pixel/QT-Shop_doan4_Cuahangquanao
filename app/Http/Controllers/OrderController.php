@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
+    
   public function reorder($id)
 {
     $order = Order::with('orderItems')->findOrFail($id);

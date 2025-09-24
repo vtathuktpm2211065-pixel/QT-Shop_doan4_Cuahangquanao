@@ -249,6 +249,7 @@
         </form>
     @endif
 </div>
+<form method="POST" action="{{ route('vnpay.payment') }}"> @csrf <input type="hidden" name="total" id="vnpay-total" value="{{ $total + $shippingFee - $discount }}"> <button type="submit" class="btn btn-danger w-100"> 🛍️ Thanh toán VNPay </button> </form>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function () {
@@ -600,7 +601,7 @@ $('#voucher_select').on('change', function () {
         }
     });
 });
-
+$('#submit-vnpay-btn').click(function() { let data = { total: $('#vnpay-total').val() }; $.ajax({ url: "{{ route('vnpay.payment') }}", type: 'POST', data: data, success: function(res){ if(res.code === "00") window.location.href = res.data; else alert("Lỗi: " + res.message); }, error: function(xhr){ alert('Lỗi VNPay: ' + (xhr.responseJSON?.error || 'Có lỗi xảy ra')); } }); });
 
 </script>
 

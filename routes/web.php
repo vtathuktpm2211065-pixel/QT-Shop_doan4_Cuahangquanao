@@ -36,6 +36,7 @@ use App\Http\Controllers\SupportController;
 use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\HoSoController;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\PaymentController;
 Auth::routes();
 Route::get('/', function () {
     return redirect('/home');
@@ -272,3 +273,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin|staff'])->name('admin.')
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('categories',AdminCategoryController::class);
 });
+
+Route::post('/vnpay_payment', [PaymentController::class, 'vnpay_payment'])
+    ->name('vnpay.payment');
+
+// Callback từ VNPay (luôn là GET)
+Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
+    ->name('vnpay.return');
