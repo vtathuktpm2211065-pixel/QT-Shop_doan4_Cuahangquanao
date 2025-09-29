@@ -11,43 +11,46 @@
     </form>
 
     <!-- Thống kê -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card border-primary shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">🛒 Tổng số giỏ hàng</h5>
-                    <p class="display-6 text-primary">{{ $totalCarts }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card border-warning shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">⏳ Đang hoạt động</h5>
-                    <p class="display-6 text-warning">{{ $active }}</p>
-                </div>
-            </div>
-        </div>
-       
-        <div class="col-md-4 mb-3">
-            <div class="card border-dark shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">💰 Giá trị TB giỏ hàng</h5>
-                    <p class="display-6 text-dark">{{ number_format($avgValue * 1, 0, ',', '.') }}₫</p>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">🛒 Tổng số giỏ hàng</h5>
+                <p class="display-6 fw-bold">{{ $totalCarts }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Bảng danh sách giỏ hàng -->     
-    <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
-            📋 Danh sách giỏ hàng
+    <div class="col-md-4 mb-3">
+        <div class="card bg-warning text-dark shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">⏳ Đang hoạt động</h5>
+                <p class="display-6 fw-bold">{{ $active }}</p>
+            </div>
         </div>
+    </div>
+   
+    <div class="col-md-4 mb-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">💰 Giá trị TB giỏ hàng</h5>
+                <p class="display-6 fw-bold">{{ number_format($avgValue * 1, 0, ',', '.') }}₫</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-header text-center fw-bold" style="font-size: 2rem; color: #000; background-color: #f7f8f7ff;">
+    📋 Danh sách giỏ hàng
+</div>
+
+
+    <!-- Bảng danh sách giỏ hàng -->     
+   <div class="card shadow-sm">
+    
         <div class="card-body p-0">
             <table class="table table-bordered table-hover m-0">
-                <thead class="table-light">
+                <thead class="table-primary text-center align-middle">
                     <tr class="text-center">
                         <th>Mã giỏ hàng</th>                 
                         <th>Khách hàng</th>  
