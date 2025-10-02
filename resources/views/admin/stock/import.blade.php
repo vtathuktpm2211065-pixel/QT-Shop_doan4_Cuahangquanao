@@ -65,36 +65,41 @@
         </div>
 
         {{-- Bảng danh sách biến thể --}}
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="select_all"></th>
-                    <th>Tên sản phẩm</th>
-                    <th>Màu</th>
-                    <th>Size</th>
-                    <th>Tồn kho</th>
-                    <th>Số lượng nhập</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($variants as $index => $variant)
-                <tr>
-                    <td>
-                        <input type="checkbox" class="select_variant" data-index="{{ $index }}">
-                    </td>
-                    <td>{{ $variant->product->name }}</td>
-                    <td>{{ $variant->color }}</td>
-                    <td>{{ $variant->size }}</td>
-                    <td>{{ $variant->stock_quantity }}</td>
-                    <td>
-                        <input type="hidden" name="imports[{{ $index }}][variant_id]" value="{{ $variant->id }}">
-                        <input type="number" name="imports[{{ $index }}][quantity]" min="0" class="form-control quantity-input" value="0" disabled>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </form>
+        <div class="table-responsive">
+    <table class="table table-hover table-bordered align-middle text-center">
+        <thead class="table-primary">
+            <tr>
+                <th style="width:40px"><input type="checkbox" id="select_all"></th>
+                <th>Tên sản phẩm</th>
+                <th>Màu</th>
+                <th>Size</th>
+                <th>Tồn kho</th>
+                <th>Số lượng nhập</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($variants as $index => $variant)
+            <tr>
+                <td>
+                    <input type="checkbox" class="select_variant" data-index="{{ $index }}">
+                </td>
+                <td class="text-start">{{ $variant->product->name }}</td>
+                <td><span class="badge bg-light text-dark">{{ $variant->color }}</span></td>
+                <td><span class="badge bg-light text-dark">{{ $variant->size }}</span></td>
+                <td><span class="badge bg-info text-white">{{ $variant->stock_quantity }}</span></td>
+                <td style="width:130px">
+                    <input type="hidden" name="imports[{{ $index }}][variant_id]" value="{{ $variant->id }}">
+                    <input type="number" 
+                           name="imports[{{ $index }}][quantity]" 
+                           min="0" 
+                           class="form-control form-control-sm text-center quantity-input" 
+                           value="0" 
+                           disabled>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 </div>
 
 <script>

@@ -36,9 +36,8 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
-    <table class="table table-bordered">
-        <thead>
+<table class="table table-hover table-bordered align-middle">
+        <thead class="table-primary text-center">
             <tr>
                 <th>Sản phẩm</th>
                 <th>Phân loại (Màu / Size)</th>
@@ -49,10 +48,13 @@
         <tbody>
             @forelse($variants as $variant)
             <tr>
-                <td>{{ $variant->product->name }}</td>
-                <td>{{ $variant->color }} / {{ $variant->size }}</td>
-                <td>{{ $variant->stock_quantity }}</td>
-                <td>{{ $variant->updated_at ? $variant->updated_at->format('d/m/Y H:i') : 'Chưa có' }}</td>
+                 <td >{{ $variant->product->name }}</td>
+                 <td >{{ $variant->color }} / {{ $variant->size }}</td>
+               <td class="text-center">
+                    <span class="badge bg-info text-white">{{ $variant->stock_quantity }}</span>
+                </td>
+
+                 <td class="text-center">{{ $variant->updated_at ? $variant->updated_at->format('d/m/Y H:i') : 'Chưa có' }}</td>
             </tr>
             @empty
             <tr>

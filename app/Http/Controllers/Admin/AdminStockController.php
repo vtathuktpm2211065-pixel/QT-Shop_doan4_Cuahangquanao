@@ -152,35 +152,35 @@ public function storeExport(Request $request)
 
 public function storeBulkExport(Request $request)
 {
-    $exports = $request->input('exports');
-
-    if (!is_array($exports) || !isset($exports[0])) {
-        $exports = [$exports];
-        $request->merge(['exports' => $exports]);
-    }
-
     $data = $request->validate([
         'exports' => 'required|array',
         'exports.*.variant_id' => 'required|exists:product_variants,id',
-        'exports.*.quantity' => 'required|integer|min:1',
+        'exports.*.quantity' => 'nullable|integer|min:0',
         'note' => 'nullable|string|max:255',
     ]);
 
     DB::beginTransaction();
     try {
         foreach ($data['exports'] as $export) {
+            // Bỏ qua sản phẩm không chọn
+            if (empty($export['variant_id']) || ($export['quantity'] ?? 0) <= 0) {
+                continue;
+            }
+
             $variant = ProductVariant::findOrFail($export['variant_id']);
 
+            // Tính tồn kho hiện tại
             $imported = $variant->stocks()->where('type', 'import')->sum('quantity');
             $exported = $variant->stocks()->where('type', 'export')->sum('quantity');
             $currentStock = $imported - $exported;
 
             if ($export['quantity'] > $currentStock) {
                 DB::rollBack();
-                return redirect()->back()->with('error', 'Xuất vượt quá tồn kho cho biến thể ID: ' . $variant->id);
+                return redirect()->back()
+                    ->with('error', "Xuất vượt quá tồn kho cho {$variant->product->name} ({$variant->color}/{$variant->size})");
             }
 
-            // Ghi nhận xuất kho
+            // Lưu phiếu xuất
             Stock::create([
                 'variant_id' => $variant->id,
                 'quantity'   => $export['quantity'],
@@ -189,7 +189,7 @@ public function storeBulkExport(Request $request)
                 'admin_id'   => auth()->id(),
             ]);
 
-            // ✅ Lưu doanh thu
+            // Lưu doanh thu
             Revenue::create([
                 'variant_id' => $variant->id,
                 'quantity'   => $export['quantity'],
@@ -200,7 +200,7 @@ public function storeBulkExport(Request $request)
                 'date'       => now()->toDateString()
             ]);
 
-            // Cập nhật tồn kho thực tế
+            // Cập nhật tồn kho
             $variant->stock_quantity = $currentStock - $export['quantity'];
             $variant->save();
         }
@@ -212,7 +212,6 @@ public function storeBulkExport(Request $request)
         return redirect()->back()->with('error', 'Đã xảy ra lỗi khi xuất kho: ' . $e->getMessage());
     }
 }
-
 
 public function storeImport(Request $request)
 {
