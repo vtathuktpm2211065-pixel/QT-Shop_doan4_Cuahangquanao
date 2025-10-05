@@ -1,11 +1,9 @@
 <?php
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\CartItem; 
+
 class CartItem extends Model
 {
     public $timestamps = false;
@@ -14,7 +12,7 @@ class CartItem extends Model
         'user_id',
         'cart_id',
         'product_id',
-         'variant_id', 
+        'variant_id', 
         'quantity',
         'added_at',
         'size',
@@ -28,19 +26,19 @@ class CartItem extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function cart(): BelongsTo
+    {
+        return $this->belongsTo(Cart::class);
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-public function variant(): BelongsTo
-{
-    return $this->belongsTo(ProductVariant::class, 'variant_id');
-}
-
-public function cart()
-{
-    return $this->belongsTo(Cart::class);
-}
-
+    public function productVariant(): BelongsTo
+    {
+        // dùng đúng tên cột trong DB: variant_id
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
 }

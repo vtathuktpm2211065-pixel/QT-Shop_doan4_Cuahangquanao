@@ -100,6 +100,13 @@
     
   </ul>
 </li> 
+<li class="nav-item">
+  <a href="{{ route('admin.customers.index') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <p>Quản lý khách hàng</p>
+  </a>
+</li>
+
         <li class="nav-item">
   <a href="{{ route('admin.team.index') }}" class="nav-link">
     <i class="fas fa-user-cog"></i>
