@@ -51,43 +51,54 @@
     </div>
 
     <!-- Giỏ hàng -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-info text-white">
-            <i class="fas fa-shopping-cart"></i> Giỏ hàng hiện tại
-        </div>
-        <div class="card-body">
-            @if($customer->carts->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Sản phẩm</th>
-                                <th>Màu</th>
-                                <th>Size</th>
-                                <th class="text-center">Số lượng</th>
-                                <th class="text-end">Giá</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($customer->carts as $cart)
-                                @foreach($cart->cartItems as $item)
-                                    <tr>
-                                        <td>{{ $item->productVariant->product->name }}</td>
-                                        <td>{{ $item->productVariant->color }}</td>
-                                        <td>{{ $item->productVariant->size }}</td>
-                                        <td class="text-center">{{ $item->quantity }}</td>
-                                        <td class="text-end text-danger fw-bold">{{ number_format($item->price) }} đ</td>
-                                    </tr>
-                                @endforeach
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <p class="text-muted">Khách hàng chưa có sản phẩm trong giỏ.</p>
-            @endif
-        </div>
+   <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-info text-white">
+        <i class="fas fa-shopping-cart"></i> Giỏ hàng hiện tại
     </div>
+    <div class="card-body">
+        @if($customer->carts->count() > 0)
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Hình ảnh</th>
+                            <th>Sản phẩm</th>
+                            <th>Màu</th>
+                            <th>Size</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($customer->carts as $cart)
+                            @foreach($cart->cartItems as $item)
+                                <tr>
+                                   
+                                     <td style="width: 100px">
+                                <img src="{{ asset('images/' . $item->product->image_url) }}" alt="{{ $item->product->name }}" class="img-fluid rounded" style="max-height: 80px">
+                            </td>
+
+                                    <td class="fw-semibold">
+                                        {{ $item->productVariant->product->name }}
+                                    </td>
+                                    <td>{{ $item->productVariant->color }}</td>
+                                    <td>{{ $item->productVariant->size }}</td>
+                                    <td class="text-center">{{ $item->quantity }}</td>
+                                    <td class="text-end text-danger fw-bold">
+                                        {{ number_format($item->price) }} đ
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-muted">Khách hàng chưa có sản phẩm trong giỏ.</p>
+        @endif
+    </div>
+</div>
+
 
     <!-- Lịch sử đơn hàng -->
     <div class="card shadow-sm">
@@ -101,6 +112,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Mã đơn</th>
+                                <th>Hình ảnh</th>
                                 <th>Ngày đặt</th>
                                 <th class="text-end">Tổng tiền</th>
                                 <th>Trạng thái</th>
@@ -110,6 +122,9 @@
                             @foreach($customer->orders as $order)
                                 <tr>
                                     <td>#{{ $order->id }}</td>
+                                     <td style="width: 100px">
+                                <img src="{{ asset('images/' . $item->product->image_url) }}" alt="{{ $item->product->name }}" class="img-fluid rounded" style="max-height: 80px">
+                            </td>
                                     <td>{{ $order->created_at->format('d/m/Y') }}</td>
                                     <td class="text-end fw-bold text-danger">{{ number_format($order->total_amount) }} đ</td>
                                     <td>

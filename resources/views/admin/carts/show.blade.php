@@ -9,8 +9,9 @@
             🧑 Thông tin khách hàng
         </div>
         <div class="card-body">
-            <p><strong>Họ tên:</strong> {{ $cart->user->name }}</p>
-            <p><strong>Email:</strong> {{ $cart->user->email }}</p>
+          <p><strong>Họ tên:</strong> {{ $cart->user?->name ?? 'Không xác định' }}</p>
+<p><strong>Email:</strong> {{ $cart->user?->email ?? 'Không xác định' }}</p>
+
             <p><strong>Trạng thái:</strong>
                 @if ($cart->status === 'active')
                     <span class="badge bg-warning">Đang chờ</span>

@@ -8,11 +8,19 @@ use App\Models\Voucher;
 
 class VoucherController extends Controller
 {
-    public function index()
-    {
-        $vouchers = Voucher::latest()->paginate(10);
-        return view('admin.vouchers.index', compact('vouchers'));
+    public function index(Request $request)
+{
+    $query = Voucher::query();
+
+    if ($request->filled('code')) {
+        $query->where('code', 'like', '%' . $request->code . '%');
     }
+
+    $vouchers = $query->orderByDesc('created_at')->paginate(10);
+
+    return view('admin.vouchers.index', compact('vouchers'));
+}
+
     public function edit($id)
 {
     $voucher = Voucher::findOrFail($id);

@@ -9,12 +9,26 @@ use App\Models\ProductReview;
 
 class AdminReviewController extends Controller
 {
-public function index()
+public function index(Request $request)
 {
-    $reviews = ProductReview::with('product', 'user')->latest()->paginate(10);
-    return view('admin.reviews.index', compact('reviews'));
-}
+    $query = ProductReview::with(['product', 'user'])->latest();
 
+    if ($request->filled('product')) {
+        $query->whereHas('product', function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->product . '%');
+        });
+    }
+
+    if ($request->filled('user')) {
+        $query->whereHas('user', function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->user . '%');
+        });
+    }
+
+    $reviews = $query->paginate(10);
+
+    return view('admin.reviews.index', compact('reviews')); // không cần truyền $request
+}
 public function destroy($id)
 {
     $review = ProductReview::findOrFail($id);

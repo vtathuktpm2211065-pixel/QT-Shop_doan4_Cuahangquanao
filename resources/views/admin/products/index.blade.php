@@ -56,7 +56,7 @@
     {{-- DANH SÁCH SẢN PHẨM --}}
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
-            <thead class="thead-light">
+         <thead class="table-primary text-center align-middle">
                 <tr>
                     <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
@@ -73,7 +73,7 @@
                 @foreach($products as $index => $product)
                 <tr>
                     <td><input type="checkbox" name="product_ids[]" value="{{ $product->id }}"></td>
-                    <td>{{ $index + 1 }}</td>
+                    <td class =" text-center">{{ $index + 1 }}</td>
                     <td>
                         <strong>{{ $product->name }}</strong><br>
                         <a href="{{ route('admin.san-pham.bien-the', $product->id) }}">🧬 Xem biến thể</a>

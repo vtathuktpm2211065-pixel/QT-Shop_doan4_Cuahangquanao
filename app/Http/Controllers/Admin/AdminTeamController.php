@@ -97,7 +97,7 @@ class AdminTeamController extends Controller
 
         $member->update($data);
 
-        return redirect()->route('team.index')->with('success', 'Đã cập nhật thông tin!');
+        return redirect()->route('admin.team.index')->with('success', 'Đã cập nhật thông tin!');
     }
 
     public function destroy($id)

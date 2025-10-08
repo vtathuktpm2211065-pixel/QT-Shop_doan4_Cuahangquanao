@@ -3,13 +3,40 @@
 @section('content')
 <div class="container-fluid">
     <h4 class="mb-4">📝 Quản lý đánh giá</h4>
-
-    @if(session('success'))
+      @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+<form method="GET" class="row g-2 align-items-center bg-white p-3 rounded shadow-sm border">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" name="product" value="{{ request('product') }}"
+                   class="form-control" placeholder="🔎 Tìm theo tên sản phẩm...">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="input-group">
+          
+            <input type="text" name="user" value="{{ request('user') }}"
+                   class="form-control" placeholder="👤 Tìm theo tên người dùng...">
+        </div>
+    </div>
+
+    <div class="col-md-4 d-flex justify-content-start align-items-center gap-3">
+        <button type="submit" class="btn btn-primary px-4 d-flex align-items-center">
+            <i class="fas fa-filter me-2"></i> Lọc
+        </button>
+        <a href="{{ route('admin.reviews.index') }}" class="btn btn-outline-secondary px-4 d-flex align-items-center">
+            <i class="fas fa-sync-alt me-2"></i> Làm mới
+        </a>
+    </div>
+</form>
+
+
+  
     <table class="table table-bordered align-middle">
-        <thead>
+          <thead class="table-primary text-center align-middle">
             <tr>
                 <th>Sản phẩm</th>
                 <th>Người dùng</th>
@@ -91,3 +118,15 @@
     </div>
 </div>
 @endsection
+<style>
+    .input-group-text {
+    border-right: none;
+}
+.form-control {
+    border-left: none;
+}
+.btn {
+    border-radius: 8px;
+}
+
+</style>
