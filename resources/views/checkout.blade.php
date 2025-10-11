@@ -249,7 +249,14 @@
         </form>
     @endif
 </div>
-<form method="POST" action="{{ route('vnpay.payment') }}"> @csrf <input type="hidden" name="total" id="vnpay-total" value="{{ $total + $shippingFee - $discount }}"> <button type="submit" class="btn btn-danger w-100"> 🛍️ Thanh toán VNPay </button> </form>
+
+<form action="{{ route('vnpay.payment') }}" method="post">
+                                            @csrf
+                                           <input type="hidden" name="total" id="vnpay-total" value="{{ $total + $shippingFee - $discount }}">
+                                            <button type="submit" class="btn btn-success check_out"
+                                                name="redirect">Thanh toán VNPAY</button>
+                                        </form>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function () {
@@ -344,6 +351,7 @@ $(document).ready(function () {
     // ✅ Hidden inputs nếu có
     $('#final-total').val(finalTotal);
     $('#shipping-fee-value').val(fee);
+      $('#vnpay-total').val(finalTotal);
 }
 
     $('#province_id').on('change', function () {
@@ -361,6 +369,7 @@ $(document).ready(function () {
         success: function (response) {
             $('#shipping-fee').text(response.fee.toLocaleString());
         }
+
     });
 });
 
@@ -601,7 +610,16 @@ $('#voucher_select').on('change', function () {
         }
     });
 });
-$('#submit-vnpay-btn').click(function() { let data = { total: $('#vnpay-total').val() }; $.ajax({ url: "{{ route('vnpay.payment') }}", type: 'POST', data: data, success: function(res){ if(res.code === "00") window.location.href = res.data; else alert("Lỗi: " + res.message); }, error: function(xhr){ alert('Lỗi VNPay: ' + (xhr.responseJSON?.error || 'Có lỗi xảy ra')); } }); });
+$('#submit-vnpay-btn').click(function() { 
+    let data = { total: $('#vnpay-total').val() };
+     $.ajax({ url: "{{ route('vnpay.payment') }}", 
+        type: 'POST', data: data, success: function(res){ 
+            if(res.code === "00") window.location.href = res.data; 
+            else alert("Lỗi: " + res.message);
+         },
+             error: function(xhr){ alert('Lỗi VNPay: ' + (xhr.responseJSON?.error || 'Có lỗi xảy ra')); } 
+            }); 
+        });
 
 </script>
 
