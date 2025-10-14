@@ -241,9 +241,9 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Nút đặt hàng -->
                     <button type="button" id="submit-order-btn" class="btn btn-danger w-100">🛍️ Đặt hàng ngay</button>
+
                 </div>
             </div>
         </form>
@@ -256,6 +256,13 @@
                                             <button type="submit" class="btn btn-success check_out"
                                                 name="redirect">Thanh toán VNPAY</button>
                                         </form>
+ <form action="{{ url('/momo_payment') }}" method="post">
+                                            @csrf
+                                          <input type="hidden" name="total_momo" id="total_momo" value="{{ $total + $shippingFee - $discount }}">
+                                            <button type="submit" class="btn btn-default check_out" name="payUrl">Thanh
+                                                toán MOMO</button>
+                                        </form>
+                                       
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -351,7 +358,8 @@ $(document).ready(function () {
     // ✅ Hidden inputs nếu có
     $('#final-total').val(finalTotal);
     $('#shipping-fee-value').val(fee);
-      $('#vnpay-total').val(finalTotal);
+    $('#vnpay-total').val(finalTotal);
+    $('#total_momo').val(finalTotal);
 }
 
     $('#province_id').on('change', function () {
@@ -610,16 +618,44 @@ $('#voucher_select').on('change', function () {
         }
     });
 });
-$('#submit-vnpay-btn').click(function() { 
-    let data = { total: $('#vnpay-total').val() };
-     $.ajax({ url: "{{ route('vnpay.payment') }}", 
-        type: 'POST', data: data, success: function(res){ 
-            if(res.code === "00") window.location.href = res.data; 
-            else alert("Lỗi: " + res.message);
-         },
-             error: function(xhr){ alert('Lỗi VNPay: ' + (xhr.responseJSON?.error || 'Có lỗi xảy ra')); } 
-            }); 
-        });
+$('#submit-vnpay-btn').click(function() {
+    const form = $('#checkout-form');
+
+    // Set payment_method = vnpay
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'payment_method',
+        value: 'vnpay'
+    }).appendTo(form);
+
+    // Submit form chính
+    form.submit();
+});
+
+$('#submit-momo-btn').click(function() {
+    const form = $('#checkout-form');
+
+    // Cập nhật payment_method
+    if ($('#checkout-form input[name="payment_method"]').length) {
+        $('#checkout-form input[name="payment_method"]').val('momo');
+    } else {
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'payment_method',
+            value: 'momo'
+        }).appendTo(form);
+    }
+
+    // Cập nhật giá ship và tổng tiền cuối cùng
+    const shippingFee = parseInt($('#shipping_fee_input').val()) || 0;
+    const baseTotal = {{ $total }};
+    const discount = {{ $discount }};
+    $('#total_amount_final').val(baseTotal + shippingFee - discount);
+
+    // Submit form chính
+    form.attr('action', "{{ url('/momo_payment') }}");
+    form.submit();
+});
 
 </script>
 

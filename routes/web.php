@@ -37,6 +37,7 @@ use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\HoSoController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Admin\MomoController; 
 Auth::routes();
 Route::get('/', function () {
     return redirect('/home');
@@ -276,6 +277,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
 Route::post('/vnpay_payment', [PaymentController::class, 'vnpay_payment'])
     ->name('vnpay.payment');
+    Route::post('/momo_payment', [MomoController::class, 'momo_payment'])
+    ->name('momo_payment');
 
 // Callback từ VNPay (luôn là GET)
 Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
