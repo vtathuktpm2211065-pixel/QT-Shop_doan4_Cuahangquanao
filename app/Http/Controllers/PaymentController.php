@@ -18,7 +18,7 @@ public function vnpay_payment(Request $request)
     $vnp_TxnRef = $code_cart; //Mã đơn hàng. Trong thực tế Merchant cần insert đơn hàng vào DB và gửi mã này sang VNPAY
     $vnp_OrderInfo = 'Thanh toán đơn hàng test';
     $vnp_OrderType = 'billpayment';
-    $vnp_Amount = $data['total'] * 100;
+    $vnp_Amount = $data['total_amount'] * 100;
     $vnp_Locale = 'vn';
     // $vnp_BankCode = 'NCB';
     $vnp_IpAddr = $_SERVER['REMOTE_ADDR'];
@@ -66,16 +66,38 @@ public function vnpay_payment(Request $request)
       $vnpSecureHash =   hash_hmac('sha512', $hashdata, $vnp_HashSecret); //  
       $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
     }
-    $returnData = array(
-      'code' => '00',
-      'message' => 'success',
-      'data' => $vnp_Url
-    );
-    if (isset($_POST['redirect'])) {
-      header('Location: ' . $vnp_Url);
-      die();
-    } else {
-      echo json_encode($returnData);
+       // REDIRECT trực tiếp đến VNPay
+        return redirect($vnp_Url);
     }
-  }
+
+    // Xử lý khi VNPay redirect về
+    public function vnpayReturn(Request $request)
+    {
+        $vnp_ResponseCode = $request->input('vnp_ResponseCode');
+        $vnp_TxnRef = $request->input('vnp_TxnRef'); // Order ID
+
+        if ($vnp_ResponseCode == '00') {
+            // Thanh toán thành công
+            $order = Order::find($vnp_TxnRef);
+            if ($order) {
+                $order->update(['status' => 'paid']);
+                
+                // Xóa cart items sau khi thanh toán thành công
+                $checkoutIds = json_decode($order->checkout_ids, true);
+                Cart::whereIn('id', $checkoutIds)->delete();
+                
+                return redirect()->route('orders.show', $order->id)
+                    ->with('success', 'Thanh toán VNPay thành công!');
+            }
+        } else {
+            // Thanh toán thất bại
+            $order = Order::find($vnp_TxnRef);
+            if ($order) {
+                $order->update(['status' => 'failed']);
+            }
+            
+            return redirect()->route('checkout')
+                ->with('error', 'Thanh toán VNPay thất bại. Mã lỗi: ' . $vnp_ResponseCode);
+        }
+    }
 }
