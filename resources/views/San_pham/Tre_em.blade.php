@@ -1,9 +1,22 @@
 @extends('app')
 
-@section('title', 'Sản phẩm Trẻ em')
+@section('title', 'Sản phẩm trẻ em')
 
 @section('styles')
 <style>
+  /* Banner section */
+  .category-banner {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+  .category-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .product-img {
     width: 100%;
     height: 300px;
@@ -56,9 +69,14 @@
 
 @section('content')
 <div class="container py-4">
+  <!-- BANNER LỚN Ở ĐẦU TRANG -->
+  <div class="category-banner">
+    <img src="{{ asset('images/banner-tre.jpg') }}" alt="Banner Sản phẩm Nam" class="banner-image">
+  </div>
+
   <div class="row mb-4">
     <div class="title-section mb-3 col-12">
-      <h2 class="text-uppercase text-center">Sản phẩm dành cho trẻ em</h2>
+      <h2 class="text-uppercase text-center">Sản phẩm dành cho treem</h2>
     </div>
   </div>
 
