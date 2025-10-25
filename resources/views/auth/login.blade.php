@@ -31,6 +31,16 @@
       background-color: #0d6efd;
       color: white;
     }
+    .btn-outline-red {
+      color: #db4437;
+      border: 2px solid #db4437;
+      font-weight: 600;
+      background-color: transparent;
+    }
+    .btn-outline-red:hover {
+      background-color: #db4437;
+      color: white;
+    }
     .login-container {
       min-height: 100vh;
       background: url('https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80') no-repeat center center;
@@ -54,6 +64,33 @@
       transform: translateY(-50%);
       cursor: pointer;
       color: #6c757d;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    .divider span {
+      padding: 0 10px;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    .social-login-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .social-login-buttons .btn {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   </style>
 </head>
@@ -92,13 +129,21 @@
           <button type="submit" class="btn btn-custom-blue">Đăng nhập</button>
         </div>
 
-        <div class="text-center mb-2">Hoặc đăng nhập bằng</div>
-        <div class="d-grid mb-3">
+        <div class="divider">
+          <span>Hoặc đăng nhập bằng</span>
+        </div>
+
+        <div class="social-login-buttons mb-3">
           <a href="{{ url('auth/facebook') }}" class="btn btn-outline-blue d-flex justify-content-center align-items-center">
             <img src="https://cdn-icons-png.flaticon.com/24/733/733547.png" alt="Facebook logo" style="margin-right: 8px;">
             Facebook
           </a>
+          <a href="{{ route('google.login') }}" class="btn btn-outline-red d-flex justify-content-center align-items-center">
+            <img src="https://cdn-icons-png.flaticon.com/24/300/300221.png" alt="Google logo" style="margin-right: 8px;">
+            Google
+          </a>
         </div>
+
 
         <div class="d-flex justify-content-between small">
           @if (Route::has('password.request'))

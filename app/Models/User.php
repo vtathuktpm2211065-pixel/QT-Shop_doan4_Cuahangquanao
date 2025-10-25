@@ -29,7 +29,7 @@ class User extends Authenticatable
     'phone',
     'avatar',
     'banned',
-
+'google_id' 
     ];
 
     /**

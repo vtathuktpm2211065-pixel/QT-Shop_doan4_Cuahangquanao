@@ -38,11 +38,12 @@ use App\Http\Controllers\HoSoController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\MomoController; 
-Auth::routes();
-Route::get('/', function () {
-    return redirect('/home');
-});
+use App\Http\Controllers\Auth\GoogleController;
 
+Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::get('/register', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [App\Http\Controllers\Auth\RegisterController::class, 'register']);
 // ✅ Trang home KHÔNG yêu cầu đăng nhập
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -287,3 +288,5 @@ Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
     Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class);
 });
+Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
