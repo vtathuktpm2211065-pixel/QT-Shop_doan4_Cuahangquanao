@@ -39,7 +39,7 @@ use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\MomoController; 
 use App\Http\Controllers\Auth\GoogleController;
-
+use App\Http\Controllers\Auth\FacebookController;
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
 Route::get('/register', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
@@ -280,6 +280,7 @@ Route::post('/vnpay_payment', [PaymentController::class, 'vnpay_payment'])
     ->name('vnpay.payment');
     Route::post('/momo_payment', [MomoController::class, 'momo_payment'])
     ->name('momo_payment');
+    
 
 // Callback từ VNPay (luôn là GET)
 Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
@@ -290,3 +291,5 @@ Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
 });
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('auth/facebook', [FacebookController::class, 'redirectToFacebook']);
+Route::get('auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
