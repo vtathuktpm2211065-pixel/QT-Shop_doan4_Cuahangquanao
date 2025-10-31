@@ -82,6 +82,8 @@ Route::post('/support/send', [SupportController::class, 'submit'])->name('suppor
 Route::post('/support/{id}/reply', [SupportController::class, 'sendReply'])->name('support.reply');
 Route::get('/support/unread/check', [SupportController::class, 'checkUnread'])->name('support.unread.check');
 Route::post('/support/{id}/mark-read', [SupportController::class, 'markAsRead'])->name('support.mark.read');
+Route::get('/support/{id}/messages', [SupportController::class, 'getNewMessages'])->name('support.messages');
+Route::post('/support/save-fcm-token', [SupportController::class, 'saveFCMToken'])->name('support.save-fcm-token');
 // Danh mục sản phẩm
 Route::get('/san-pham/noi-bat', [SanPhamNoiBatController::class, 'index'])->name('san-pham.noi-bat');
 Route::get('/san-pham/cho-nu', [San_pham_nuController::class, 'index'])->name('san-pham.cho-nu');
@@ -266,9 +268,21 @@ Route::post('/admin/stock/export/bulk', [AdminStockController::class, 'storeBulk
 
 Route::prefix('admin')->middleware(['auth', 'role:admin|staff'])->name('admin.')->group(function () {
     Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
+    Route::get('/support/advanced', [AdminSupportController::class, 'advancedList'])->name('support.advanced');
     Route::get('/support/{id}/chat', [AdminSupportController::class, 'chat'])->name('support.chat');
     Route::post('/support/{id}/reply', [AdminSupportController::class, 'reply'])->name('support.reply');
+    Route::post('/support/quick-reply', [AdminSupportController::class, 'quickReply'])->name('support.quick-reply');
+    Route::post('/support/{id}/mark-read', [AdminSupportController::class, 'markAsRead'])->name('support.mark-read');
+    Route::post('/support/{id}/status', [AdminSupportController::class, 'updateStatus'])->name('support.update-status');
     Route::delete('/support/{id}', [AdminSupportController::class, 'destroy'])->name('support.delete');
+    Route::get('/support/stats', [AdminSupportController::class, 'getStats'])->name('support.stats');
+    Route::get('/support-analytics', [AdminSupportController::class, 'analytics'])->name('support.analytics');
+    Route::post('/support/{id}/priority', [AdminSupportController::class, 'updatePriority'])->name('support.update-priority');
+    Route::post('/support/{id}/send-location', [AdminSupportController::class, 'sendQuickLocation'])->name('support.send-location');
+    Route::get('/api/shop-locations/nearby', [AdminSupportController::class, 'getNearbyShops'])->name('api.shop-locations.nearby');
+    Route::get('/{id}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.messages');
+    Route::get('/unread-count', [AdminSupportController::class, 'getUnreadCount'])->name('support.unread-count');
+
 });
 
 Route::prefix('admin')->middleware('auth')->group(function () {

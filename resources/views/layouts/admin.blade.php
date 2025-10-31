@@ -8,6 +8,27 @@
   <!-- CSS -->
   <link rel="stylesheet" href="{{ asset('adminlte/plugins/fontawesome-free/css/all.min.css') }}">
   <link rel="stylesheet" href="{{ asset('adminlte/dist/css/adminlte.min.css') }}">
+
+  <!-- Firebase App -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<!-- Firebase Messaging -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "{{ env('FIREBASE_API_KEY') }}",
+    authDomain: "{{ env('FIREBASE_AUTH_DOMAIN') }}",
+    projectId: "{{ env('FIREBASE_PROJECT_ID') }}",
+    storageBucket: "{{ env('FIREBASE_STORAGE_BUCKET') }}",
+    messagingSenderId: "{{ env('FIREBASE_MESSAGING_SENDER_ID') }}",
+    appId: "{{ env('FIREBASE_APP_ID') }}"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
+
 </head>
 
 <body class="hold-transition sidebar-mini">

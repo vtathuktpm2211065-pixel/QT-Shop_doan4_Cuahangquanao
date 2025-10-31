@@ -7,12 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class SupportRequest extends Model
 {
     protected $fillable = [
-        'user_id',
-        'name',
-        'email',
-        'phone',
-        'message',
-        'is_read',
+    'user_id',
+    'name',
+    'email',
+    'phone',
+    'message',
+    'is_read',
+    'status',
+    'priority', 
+    'type',
+    'attachment'
     ];
 
     public function replies()
