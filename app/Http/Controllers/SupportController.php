@@ -152,7 +152,7 @@ class SupportController extends Controller
     return response()->json([
         'success' => true,
         'reply' => $reply,
-        'message' => 'Đã gửi phản hồi thành công!'
+        'message' => 'Đã gửi tin nhắn '
     ]);
 }
 

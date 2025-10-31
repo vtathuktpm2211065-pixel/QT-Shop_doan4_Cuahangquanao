@@ -145,6 +145,21 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     z-index: 1000;
   }
+.support-alert, .modal-support-alert {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 </style>
 
 <div class="container-fluid py-4">
@@ -664,20 +679,20 @@ class SupportChatRealTime {
         this.lastMessageId = {{ $request->replies->max('id') ?? 0 }};
         this.isPolling = false;
         this.pollingInterval = null;
+        this.isSubmitting = false;
         this.init();
     }
 
     init() {
         this.startPolling();
         this.setupFormSubmit();
-        this.setupFirebase();
     }
 
     // Polling để lấy tin nhắn mới
     startPolling() {
         this.pollingInterval = setInterval(() => {
             this.checkNewMessages();
-        }, 3000); // Kiểm tra mỗi 3 giây
+        }, 3000);
     }
 
     async checkNewMessages() {
@@ -692,7 +707,6 @@ class SupportChatRealTime {
                 this.appendNewMessages(data.messages);
                 this.lastMessageId = data.last_message_id;
                 this.scrollToBottom();
-                this.updateUnreadBadges();
             }
         } catch (error) {
             console.error('Error fetching new messages:', error);
@@ -700,226 +714,152 @@ class SupportChatRealTime {
         this.isPolling = false;
     }
 
-appendNewMessages(messages) {
-    console.log('Appending messages:', messages);
-    const chatBox = document.getElementById('chatBox');
-    console.log('Chat box found:', chatBox);
-    
-    messages.forEach(message => {
-        console.log('Processing message:', message);
-        const existingMessage = document.querySelector(`[data-message-id="${message.id}"]`);
-        if (existingMessage) {
-            console.log('Message already exists:', message.id);
-            return;
-        }
+    appendNewMessages(messages) {
+        const chatBox = document.getElementById('chatBox');
         
-        const messageElement = this.createMessageElement(message);
-        console.log('Created message element:', messageElement);
-        
-        if (messageElement && chatBox) {
-            chatBox.appendChild(messageElement);
-            console.log('Message appended successfully');
-        } else {
-            console.error('Failed to append message:', { messageElement, chatBox });
-        }
-    });
-}
-
-createMessageElement(message) {
-    const isAdmin = message.is_admin; // Sử dụng trường is_admin
-    const messageClass = isAdmin ? 'message admin' : 'message user';
-    const senderName = isAdmin ? (message.user ? message.user.name : 'Admin') : (message.name || 'Khách hàng');
-    
-    // Tạo div element thay vì return string
-    const messageDiv = document.createElement('div');
-    messageDiv.className = messageClass;
-    messageDiv.setAttribute('data-message-id', message.id);
-    
-    messageDiv.innerHTML = `
-        <div class="sender-name">
-            ${this.escapeHtml(senderName)}
-            ${isAdmin ? '<span class="badge bg-success status-badge">Nhân viên</span>' : '<span class="badge bg-primary status-badge">Khách hàng</span>'}
-        </div>
-        <div class="message-content">${this.escapeHtml(message.reply)}</div>
-        <div class="message-time">
-            ${new Date(message.created_at).toLocaleString('vi-VN')}
-        </div>
-    `;
-    
-    return messageDiv;
-}
-
-escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-    setupFormSubmit() {
-    const form = document.getElementById('replyForm');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (this.isSubmitting) return;
-        
-        const message = messageInput.value.trim();
-        if (!message) return;
-        
-        this.isSubmitting = true;
-        sendButton.disabled = true;
-        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
-        
-        try {
-            const formData = new FormData(form);
+        messages.forEach(message => {
+            const existingMessage = document.querySelector(`[data-message-id="${message.id}"]`);
+            if (existingMessage) return;
             
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Thêm tin nhắn mới vào chat
-                this.appendNewMessages([result.reply]);
-                this.lastMessageId = result.reply.id;
-                this.scrollToBottom();
-                
-                // Reset form
-                messageInput.value = '';
-                document.getElementById('charCount').textContent = '0';
-                document.getElementById('fileName').textContent = '';
-                
-                // Hiển thị thông báo thành công
-                this.showSuccessMessage(result.message);
-            } else {
-                throw new Error(result.message || 'Có lỗi xảy ra');
+            const messageElement = this.createMessageElement(message);
+            if (messageElement && chatBox) {
+                chatBox.appendChild(messageElement);
             }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            this.showErrorMessage(error.message || 'Có lỗi xảy ra khi gửi tin nhắn');
-        } finally {
-            this.isSubmitting = false;
-            sendButton.disabled = false;
-            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi tin nhắn';
-        }
-    });
-}
-
-
-// Thêm method hiển thị lỗi
-showErrorMessage(message) {
-    const toast = document.createElement('div');
-    toast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
-        <i class="fas fa-exclamation-circle"></i> ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
-}
-
-    setupFirebase() {
-        // Khởi tạo Firebase Messaging
-        const messaging = firebase.messaging();
-        
-        // Yêu cầu quyền thông báo
-        this.requestNotificationPermission();
-        
-        // Xử lý tin nhắn background
-        messaging.onBackgroundMessage((payload) => {
-            console.log('Received background message:', payload);
-            
-            // Hiển thị thông báo
-            this.showNotification(payload);
         });
     }
 
-    async requestNotificationPermission() {
-        try {
-            const messaging = firebase.messaging();
-            await messaging.requestPermission();
-            const token = await messaging.getToken();
-            
-            // Lưu token vào database
-            await this.saveFCMToken(token);
-            
-            console.log('FCM Token:', token);
-        } catch (error) {
-            console.log('Notification permission denied');
-        }
+    createMessageElement(message) {
+        const isAdmin = message.is_admin;
+        const messageClass = isAdmin ? 'message admin' : 'message user';
+        const senderName = isAdmin ? (message.user ? message.user.name : 'Admin') : (message.name || 'Khách hàng');
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = messageClass;
+        messageDiv.setAttribute('data-message-id', message.id);
+        
+        messageDiv.innerHTML = `
+            <div class="sender-name">
+                ${this.escapeHtml(senderName)}
+                ${isAdmin ? '<span class="badge bg-success status-badge">Nhân viên</span>' : '<span class="badge bg-primary status-badge">Khách hàng</span>'}
+            </div>
+            <div class="message-content">${this.escapeHtml(message.reply)}</div>
+            <div class="message-time">
+                ${new Date(message.created_at).toLocaleString('vi-VN')}
+            </div>
+        `;
+        
+        return messageDiv;
     }
 
-    async saveFCMToken(token) {
-        try {
-            await fetch('/api/save-fcm-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ token })
-            });
-        } catch (error) {
-            console.error('Error saving FCM token:', error);
-        }
+    escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-    showNotification(payload) {
-        if (!("Notification" in window)) {
-            console.log("This browser does not support notifications");
-            return;
-        }
-
-        if (Notification.permission === "granted") {
-            const notification = new Notification(payload.notification.title, {
-                body: payload.notification.body,
-                icon: '/images/logo.png',
-                data: payload.data
-            });
-
-            notification.onclick = () => {
-                window.focus();
-                notification.close();
+    setupFormSubmit() {
+        const form = document.getElementById('replyForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        
+        if (!form) return;
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (this.isSubmitting) return;
+            
+            const message = messageInput.value.trim();
+            if (!message) {
+                this.showAlert('Vui lòng nhập tin nhắn', 'warning');
+                return;
+            }
+            
+            this.isSubmitting = true;
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            
+            try {
+                const formData = new FormData(form);
                 
-                // Xử lý khi click vào notification
-                if (payload.data.support_request_id) {
-                    window.location.href = `/admin/support/chat/${payload.data.support_request_id}`;
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Thêm tin nhắn mới vào chat
+                    this.appendNewMessages([result.reply]);
+                    this.lastMessageId = result.reply.id;
+                    this.scrollToBottom();
+                    
+                    // Reset form
+                    messageInput.value = '';
+                    document.getElementById('charCount').textContent = '0';
+                    document.getElementById('fileName').textContent = '';
+                    
+                    // Hiển thị thông báo thành công
+                    this.showAlert(result.message || 'Đã gửi tin nhắn thành công!', 'success');
+                } else {
+                    throw new Error(result.message || 'Có lỗi xảy ra');
                 }
-            };
+            } catch (error) {
+                console.error('Error sending message:', error);
+                this.showAlert(error.message || 'Có lỗi xảy ra khi gửi tin nhắn', 'danger');
+            } finally {
+                this.isSubmitting = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi tin nhắn';
+            }
+        });
+    }
+
+    showAlert(message, type = 'success', duration = 3000) {
+        // Kiểm tra nếu đã có alert cùng loại thì xóa
+        const existingAlert = document.querySelector('.support-alert');
+        if (existingAlert) {
+            existingAlert.remove();
         }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show support-alert position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                    type === 'danger' ? 'fa-exclamation-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        alertDiv.innerHTML = `
+            <i class="fas ${icon}"></i> 
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Tự động ẩn sau duration
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+        }, duration);
     }
 
     scrollToBottom() {
         const chatBox = document.getElementById('chatBox');
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    updateUnreadBadges() {
-        // Cập nhật badge unread count
-        fetch('/admin/support/unread-count')
-            .then(response => response.json())
-            .then(data => {
-                const badge = document.querySelector('.unread-badge');
-                if (badge) {
-                    badge.textContent = data.unread_count;
-                    badge.style.display = data.unread_count > 0 ? 'inline' : 'none';
-                }
-            });
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
     }
 
     destroy() {
@@ -929,10 +869,148 @@ showErrorMessage(message) {
     }
 }
 
-// Khởi tạo real-time chat khi trang load
+// Các hàm utility
+function scrollToBottom() {
+    const chatBox = document.getElementById('chatBox');
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function updateStatus(status) {
+    fetch(`/admin/support/{{ $request->id }}/status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ status: status })
+    }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+}
+
+function updatePriority(priority) {
+    // Tương tự như updateStatus
+    alert('Tính năng cập nhật mức độ ưu tiên đang được phát triển');
+}
+
+function insertQuickReply() {
+    const quickReplies = [
+        "Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi trong thời gian sớm nhất!",
+        "Chúng tôi đã nhận được yêu cầu của bạn và đang xử lý.",
+        "Vui lòng cung cấp thêm thông tin để chúng tôi hỗ trợ tốt hơn."
+    ];
+    
+    const randomReply = quickReplies[Math.floor(Math.random() * quickReplies.length)];
+    const messageInput = document.getElementById('messageInput');
+    const charCount = document.getElementById('charCount');
+    
+    if (messageInput) {
+        messageInput.value = randomReply;
+        charCount.textContent = randomReply.length;
+        messageInput.focus();
+    }
+}
+
+// Khởi tạo khi trang load
 document.addEventListener('DOMContentLoaded', function() {
+    const chatBox = document.getElementById('chatBox');
+    const messageInput = document.getElementById('messageInput');
+    const charCount = document.getElementById('charCount');
+    const attachmentInput = document.getElementById('attachment');
+    const fileName = document.getElementById('fileName');
+    const scrollToBottomBtn = document.getElementById('scrollToBottom');
+
+    // Tự động cuộn xuống dưới cùng
+    scrollToBottom();
+
+    // Đếm ký tự
+    if (messageInput && charCount) {
+        messageInput.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = length;
+            charCount.className = length > 1000 ? 'text-danger' : 'text-muted';
+        });
+        charCount.textContent = messageInput.value.length;
+    }
+
+    // Hiển thị tên file
+    if (attachmentInput && fileName) {
+        attachmentInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileName.textContent = this.files[0].name;
+                fileName.className = 'ms-2 small text-success';
+            } else {
+                fileName.textContent = '';
+            }
+        });
+    }
+
+    // Hiển thị nút scroll to bottom khi cuộn lên
+    if (chatBox && scrollToBottomBtn) {
+        chatBox.addEventListener('scroll', function() {
+            const isAtBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 100;
+            scrollToBottomBtn.style.display = isAtBottom ? 'none' : 'flex';
+        });
+    }
+
+    // Khởi tạo real-time chat
     const supportRequestId = {{ $request->id }};
     window.supportChat = new SupportChatRealTime(supportRequestId);
+
+    // Gửi vị trí nhanh
+    document.querySelectorAll('.send-location-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lat = this.dataset.lat;
+            const lng = this.dataset.lng;
+            const name = this.dataset.name;
+            const address = this.dataset.address;
+            
+            fetch(`/admin/support/{{ $request->id }}/send-location`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    latitude: lat,
+                    longitude: lng,
+                    name: name,
+                    address: address
+                })
+            }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        });
+    });
+
+    // Auto-scroll khi có tin nhắn mới
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                scrollToBottom();
+            }
+        });
+    });
+
+    if (chatBox) {
+        observer.observe(chatBox, {
+            childList: true,
+            subtree: true
+        });
+    }
 });
 </script>
 @endsection

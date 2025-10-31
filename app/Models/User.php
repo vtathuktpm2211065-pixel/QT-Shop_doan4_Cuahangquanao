@@ -21,7 +21,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
+protected $fillable = [
     'username',
     'name',
     'email',
@@ -29,13 +29,9 @@ class User extends Authenticatable
     'phone',
     'avatar',
     'banned',
-<<<<<<< HEAD
-    'fcm_token'
-
-=======
-'google_id' 
->>>>>>> fd076d7191565268f7984dac844171967388cc1e
-    ];
+    'fcm_token',
+    'google_id'
+];
 
     /**
      * The attributes that should be hidden for serialization.

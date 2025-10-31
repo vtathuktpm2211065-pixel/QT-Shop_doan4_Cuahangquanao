@@ -1,6 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+// ✅ Route mặc định - chuyển hướng đến home
+Route::get('/', function () {
+    return redirect('/home');
+});
 
 // Controllers
 use App\Http\Controllers\ProductController;
@@ -40,10 +46,13 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\MomoController; 
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\FacebookController;
+
+// ✅ Các route authentication
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
 Route::get('/register', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [App\Http\Controllers\Auth\RegisterController::class, 'register']);
+
 // ✅ Trang home KHÔNG yêu cầu đăng nhập
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -55,9 +64,7 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-
-
-// Tìm kiếm sản phẩm 
+// ✅ Tìm kiếm sản phẩm 
 Route::get('/search', [ProductController::class, 'search'])->name('search');
 
 // Trang giới thiệu 

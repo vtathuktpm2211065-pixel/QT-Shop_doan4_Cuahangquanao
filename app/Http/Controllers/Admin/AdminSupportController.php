@@ -183,9 +183,10 @@ public function reply(Request $request, $id)
             );
         }
 
+        
         return response()->json([
             'success' => true,
-            'reply' => $replyData, // Trả về dữ liệu đã format
+            'reply' => $replyData,
             'message' => 'Đã gửi phản hồi!'
         ]);
     } catch (\Exception $e) {
