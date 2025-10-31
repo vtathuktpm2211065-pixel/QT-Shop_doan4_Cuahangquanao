@@ -29,8 +29,12 @@ class User extends Authenticatable
     'phone',
     'avatar',
     'banned',
+<<<<<<< HEAD
     'fcm_token'
 
+=======
+'google_id' 
+>>>>>>> fd076d7191565268f7984dac844171967388cc1e
     ];
 
     /**
