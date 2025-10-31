@@ -27,7 +27,7 @@ class SupportReply extends Model
     {
         return $this->belongsTo(SupportRequest::class, 'support_request_id');
     }
-
+    
     public function user()
     {
         return $this->belongsTo(User::class);

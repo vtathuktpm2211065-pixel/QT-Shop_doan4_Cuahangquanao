@@ -46,6 +46,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\MomoController; 
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\FacebookController;
+use App\Http\Controllers\NotificationController;
 
 // ✅ Các route authentication
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
@@ -314,3 +315,12 @@ Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 Route::get('auth/facebook', [FacebookController::class, 'redirectToFacebook']);
 Route::get('auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback']);
+
+// Thông báo
+Route::get('/api/notifications', [NotificationController::class, 'getNotifications']);
+Route::post('/api/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+Route::post('/api/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+Route::get('/api/notifications/check', [NotificationController::class, 'checkNewNotifications']);
+
+Route::post('/support/{id}/mark-all-read', [SupportController::class, 'markAllRepliesAsRead'])->name('support.mark-all-read');
+Route::get('/support/unread-count', [SupportController::class, 'getUnreadAdminMessagesCount'])->name('support.unread-count');

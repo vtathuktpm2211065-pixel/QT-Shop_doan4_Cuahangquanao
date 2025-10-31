@@ -42,6 +42,57 @@
               </ul>
             </li>
 
+            <!-- Chuông thông báo -->
+            {{-- Trong file navbar.blade.php --}}
+
+<!-- Chuông thông báo -->
+<li class="nav-item position-relative">
+    <a href="#" class="nav-link position-relative" id="notification-bell">
+        <img src="https://cdn-icons-png.flaticon.com/512/565/565422.png" alt="Thông báo" style="width: 24px; height: 24px;">
+        <span class="notification-count badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" id="notification-count" style="{{ $supportUnreadCount > 0 ? '' : 'display: none;' }}">
+            {{ $supportUnreadCount ?? 0 }}
+        </span>
+    </a>
+    <!-- Dropdown thông báo -->
+    <div class="notification-dropdown rounded shadow-sm" id="notification-dropdown">
+        <div class="notification-header d-flex justify-content-between align-items-center p-3 border-bottom">
+            <h6 class="mb-0">Thông báo hỗ trợ</h6>
+            <a href="#" class="text-decoration-none mark-all-read" id="mark-all-read">Đánh dấu đã đọc tất cả</a>
+        </div>
+        <div class="notification-list" id="notification-list">
+            <!-- Danh sách thông báo sẽ được thêm vào đây bằng JavaScript -->
+            @if($supportUnreadCount > 0)
+                <div class="notification-item p-3 border-bottom unread">
+                    <div class="d-flex align-items-start">
+                        <div class="notification-icon me-3">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Thông báo" style="width: 24px; height: 24px;">
+                        </div>
+                        <div class="notification-content flex-grow-1">
+                            <p class="mb-1">Bạn có {{ $supportUnreadCount }} tin nhắn chưa đọc từ hỗ trợ viên</p>
+                            <small class="text-muted">Nhấp để xem</small>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="notification-item p-3 border-bottom">
+                    <div class="d-flex align-items-start">
+                        <div class="notification-icon me-3">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Thông báo" style="width: 24px; height: 24px;">
+                        </div>
+                        <div class="notification-content flex-grow-1">
+                            <p class="mb-1">Chào mừng bạn đến với QT Shop!</p>
+                            <small class="text-muted">Vừa xong</small>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+        <div class="notification-footer text-center p-2">
+            <a href="{{ route('support.index') }}" class="text-decoration-none">Xem tất cả tin nhắn hỗ trợ</a>
+        </div>
+    </div>
+</li>
+
             <!-- Giỏ hàng -->
             <li class="nav-item position-relative">
               <a href="{{ route('cart.index') }}" class="nav-link position-relative">
@@ -51,7 +102,6 @@
                 </span>
               </a>
             </li>
-
             <!-- Tin nhắn hỗ trợ -->
             <li class="nav-item position-relative">
               <a href="{{ route('support.index') }}" class="nav-link position-relative" title="Hỗ trợ">
@@ -107,6 +157,7 @@
         <li><a href="{{ route('orders.index') }}" class="nav-link">Đơn hàng của tôi</a></li>
         <li><a href="{{ route('guest.track_order_form') }}" class="nav-link">Tra cứu đơn hàng</a></li>
         <li><a href="{{ route('cart.index') }}" class="nav-link">Giỏ hàng</a></li>
+        <li><a href="" class="nav-link">Thông báo</a></li>
         <li class="has-children">
           <a href="#" class="nav-link">Tài khoản</a>
           <ul class="dropdown">
@@ -163,6 +214,174 @@ document.querySelectorAll('.mobile-menu .has-children > a').forEach(link => {
     parentLi.classList.toggle('active');
   });
 });
+
+// Trong file navbar.blade.php - phần JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationBell = document.getElementById('notification-bell');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+    const notificationCount = document.getElementById('notification-count');
+    const markAllReadBtn = document.getElementById('mark-all-read');
+    const notificationList = document.getElementById('notification-list');
+    
+    // Toggle dropdown thông báo
+    notificationBell.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        notificationDropdown.classList.toggle('show');
+        loadSupportNotifications();
+    });
+    
+    // Đóng dropdown khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+            notificationDropdown.classList.remove('show');
+        }
+    });
+    
+    // Đánh dấu tất cả đã đọc
+    markAllReadBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        markAllSupportAsRead();
+    });
+    
+    // Kiểm tra thông báo mới mỗi 30 giây
+    setInterval(checkNewSupportMessages, 30000);
+    
+    // Kiểm tra ngay khi trang load
+    checkNewSupportMessages();
+});
+
+// Hàm kiểm tra tin nhắn hỗ trợ mới
+function checkNewSupportMessages() {
+    fetch('/support/unread-count')
+        .then(response => response.json())
+        .then(data => {
+            const notificationCount = document.getElementById('notification-count');
+            if (data.unread_count > 0) {
+                notificationCount.textContent = data.unread_count;
+                notificationCount.style.display = 'block';
+                
+                // Hiệu ứng rung chuông nếu có tin nhắn mới
+                const notificationBell = document.getElementById('notification-bell');
+                notificationBell.classList.add('ringing');
+                setTimeout(() => {
+                    notificationBell.classList.remove('ringing');
+                }, 1000);
+                
+                // Hiển thị thông báo desktop
+                showDesktopNotification(data.unread_count);
+            } else {
+                notificationCount.style.display = 'none';
+            }
+        })
+        .catch(error => console.error('Lỗi kiểm tra tin nhắn:', error));
+}
+
+// Hàm đánh dấu tất cả đã đọc
+function markAllSupportAsRead() {
+    fetch('{{ route("support.mark-all-read", ["id" => $supportRequest->id ?? 0]) }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cập nhật số lượng thông báo
+            const notificationCount = document.getElementById('notification-count');
+            notificationCount.textContent = '0';
+            notificationCount.style.display = 'none';
+            
+            // Cập nhật giao diện thông báo
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            // Hiển thị thông báo thành công
+            showAlert('Đã đánh dấu tất cả tin nhắn là đã đọc', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        showAlert('Có lỗi xảy ra khi đánh dấu đã đọc', 'error');
+    });
+}
+
+// Hàm tải thông báo hỗ trợ
+function loadSupportNotifications() {
+    fetch('/support/unread-count')
+        .then(response => response.json())
+        .then(data => {
+            const notificationList = document.getElementById('notification-list');
+            if (data.unread_count > 0) {
+                notificationList.innerHTML = `
+                    <div class="notification-item p-3 border-bottom unread">
+                        <div class="d-flex align-items-start">
+                            <div class="notification-icon me-3">
+                                <img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Thông báo" style="width: 24px; height: 24px;">
+                            </div>
+                            <div class="notification-content flex-grow-1">
+                                <p class="mb-1">Bạn có <strong>${data.unread_count}</strong> tin nhắn chưa đọc từ hỗ trợ viên</p>
+                                <small class="text-muted">Nhấp vào "Xem tất cả" để xem chi tiết</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                notificationList.innerHTML = `
+                    <div class="notification-item p-3 border-bottom">
+                        <div class="d-flex align-items-start">
+                            <div class="notification-icon me-3">
+                                <img src="https://cdn-icons-png.flaticon.com/512/3595/3595455.png" alt="Thông báo" style="width: 24px; height: 24px;">
+                            </div>
+                            <div class="notification-content flex-grow-1">
+                                <p class="mb-1">Chào mừng bạn đến với QT Shop!</p>
+                                <small class="text-muted">Không có tin nhắn mới</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => console.error('Lỗi tải thông báo:', error));
+}
+
+// Hiển thị thông báo desktop
+function showDesktopNotification(unreadCount) {
+    if (Notification.permission === 'granted') {
+        new Notification('QT Shop - Tin nhắn mới', {
+            body: `Bạn có ${unreadCount} tin nhắn chưa đọc từ hỗ trợ viên`,
+            icon: 'https://cdn-icons-png.flaticon.com/512/3595/3595455.png'
+        });
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                new Notification('QT Shop - Tin nhắn mới', {
+                    body: `Bạn có ${unreadCount} tin nhắn chưa đọc từ hỗ trợ viên`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/3595/3595455.png'
+                });
+            }
+        });
+    }
+}
+
+// Hiển thị thông báo
+function showAlert(message, type = 'success') {
+    // Tạo và hiển thị thông báo tạm thời
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.textContent = message;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+
+}
 </script>
 
 <style>
@@ -248,6 +467,63 @@ document.querySelectorAll('.mobile-menu .has-children > a').forEach(link => {
   padding: 0.3em 0.5em;
 }
 
+/* Dropdown thông báo */
+.notification-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1050;
+}
+
+.notification-dropdown.show {
+  display: block;
+}
+
+.notification-item {
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+  border-left: 3px solid #007bff;
+}
+
+.mark-all-read {
+  font-size: 0.85rem;
+  color: #007bff;
+}
+
+.mark-all-read:hover {
+  text-decoration: underline !important;
+}
+
+/* Hiệu ứng rung chuông */
+@keyframes ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(-10deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-10deg); }
+  40% { transform: rotate(10deg); }
+  50% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+.ringing img {
+  animation: ring 0.5s ease-in-out;
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .main-nav {
@@ -280,6 +556,12 @@ document.querySelectorAll('.mobile-menu .has-children > a').forEach(link => {
   /* Khi active thì xổ ra */
   .mobile-menu .has-children.active > .dropdown {
     display: block;
+  }
+  
+  /* Điều chỉnh dropdown thông báo trên mobile */
+  .notification-dropdown {
+    width: 280px;
+    right: -50px;
   }
 }
 @keyframes marquee {

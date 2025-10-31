@@ -272,4 +272,65 @@ private function sendRealTimeNotification($supportRequest, $reply)
         
         return response()->json(['unread_count' => $unreadCount]);
     }
+
+    // Thêm vào SupportController.php
+
+/**
+ * Đánh dấu tất cả tin nhắn đã đọc
+ */
+public function markAllRepliesAsRead($id)
+{
+    $supportRequest = SupportRequest::findOrFail($id);
+    
+    // Kiểm tra quyền truy cập
+    if (Auth::check()) {
+        if ($supportRequest->user_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền truy cập yêu cầu này.');
+        }
+    } else {
+        $guestId = session('guest_support_request_id');
+        if ($supportRequest->id != $guestId) {
+            abort(403, 'Bạn không có quyền truy cập yêu cầu này.');
+        }
+    }
+    
+    // Đánh dấu tất cả tin nhắn từ admin là đã đọc
+    $supportRequest->replies()
+        ->where('is_admin', true)
+        ->where('is_read', false)
+        ->update(['is_read' => true]);
+    
+    return response()->json(['success' => true]);
+}
+
+/**
+ * Lấy số lượng tin nhắn chưa đọc từ admin
+ */
+public function getUnreadAdminMessagesCount()
+{
+    $unreadCount = 0;
+    
+    if (Auth::check()) {
+        $supportRequest = SupportRequest::where('user_id', Auth::id())->first();
+        if ($supportRequest) {
+            $unreadCount = $supportRequest->replies()
+                ->where('is_admin', true)
+                ->where('is_read', false)
+                ->count();
+        }
+    } else {
+        $guestId = session('guest_support_request_id');
+        if ($guestId) {
+            $supportRequest = SupportRequest::find($guestId);
+            if ($supportRequest) {
+                $unreadCount = $supportRequest->replies()
+                    ->where('is_admin', true)
+                    ->where('is_read', false)
+                    ->count();
+            }
+        }
+    }
+    
+    return response()->json(['unread_count' => $unreadCount]);
+}
 }

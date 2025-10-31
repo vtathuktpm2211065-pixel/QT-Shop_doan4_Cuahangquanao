@@ -27,13 +27,27 @@ class AppServiceProvider extends ServiceProvider
             $totalQuantity = CartItem::where('user_id', $userId)->sum('quantity');
             $view->with('totalQuantity', $totalQuantity);
 
-            // 💬 Số lượng phản hồi chưa đọc
+            // 💬 Số lượng phản hồi chưa đọc (chung)
+            $unreadCount = 0;
             if (Auth::check()) {
-                $unreadCount = SupportReply::whereHas('request', function($q) {
+                $unreadCount = SupportReply::whereHas('request', function ($q) {
                     $q->where('user_id', Auth::id());
                 })->where('is_read', false)->count();
-                $view->with('unreadCount', $unreadCount);
             }
+            $view->with('unreadCount', $unreadCount);
+
+            // 💌 Số lượng phản hồi từ admin chưa đọc (riêng support)
+            $supportUnreadCount = 0;
+            if (Auth::check()) {
+                $supportRequest = SupportRequest::where('user_id', Auth::id())->first();
+                if ($supportRequest) {
+                    $supportUnreadCount = $supportRequest->replies()
+                        ->where('is_admin', true)
+                        ->where('is_read', false)
+                        ->count();
+                }
+            }
+            $view->with('supportUnreadCount', $supportUnreadCount);
 
             // 🏬 Vị trí cửa hàng (cho layout app.blade.php)
             try {
