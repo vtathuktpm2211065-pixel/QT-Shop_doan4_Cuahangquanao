@@ -31,21 +31,44 @@
                     {{ $districtName ? $districtName . ', ' : '' }}
                     {{ $provinceName }}
                 </p>
-                <p><strong>💳 Thanh toán:</strong> {{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</p>
+                <p><strong>💳 Phương thức thanh toán:</strong> {{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</p>
+                
+                {{-- Hiển thị trạng thái thanh toán --}}
+                <p><strong>💰 Trạng thái thanh toán:</strong>
+                    @if($order->status == 'paid')
+                        <span class="badge bg-success">✅ Đã thanh toán</span>
+                    @elseif($order->status == 'pending')
+                        <span class="badge bg-warning">⏳ Chờ thanh toán</span>
+                    @elseif($order->status == 'failed')
+                        <span class="badge bg-danger">❌ Thanh toán thất bại</span>
+                    @else
+                        <span class="badge bg-secondary">💳 Chưa thanh toán</span>
+                    @endif
+                </p>
+
+                @if($order->transaction_id)
+                    <p><strong>🔢 Mã giao dịch:</strong> {{ $order->transaction_id }}</p>
+                @endif
+
                 <p><strong>🏷️ Mã giảm giá:</strong> {{ $order->voucher_code ?? 'Không sử dụng' }}</p>
 
                 @php
-                    $itemsTotal = $order->orderItems->sum('total_price');
-                    $shipping = $order->shipping_fee ?? 0;
-                    $discount = $order->discount_amount ?? 0;
-                    $finalTotal = $itemsTotal + $shipping - $discount;
-
+                    $itemsTotal = 0;
+    foreach ($order->orderItems as $item) {
+        $itemsTotal += ($item->unit_price * $item->quantity);
+    }
+    
+    $shipping = $order->shipping_fee ?? 0;
+    $discount = $order->discount_amount ?? 0;
+    $finalTotal = $itemsTotal + $shipping - $discount;
+                   
                     $statusLabels = [
                         'pending' => 'Chờ duyệt',
                         'approved' => 'Đã duyệt',
                         'shipping' => 'Đang giao hàng',
                         'delivered' => 'Giao hàng thành công',
                         'cancelled' => 'Đã hủy',
+                       
                     ];
 
                     $badgeClasses = [
@@ -54,14 +77,17 @@
                         'shipping' => 'bg-primary',
                         'delivered' => 'bg-success',
                         'cancelled' => 'bg-danger',
+                    
                     ];
                 @endphp
-@if($order->discount_amount > 0)
-<div class="d-flex justify-content-between">
-    <span class="text-success">Giảm giá:</span>
-    <span class="text-success">-{{ number_format($order->discount_amount) }} VNĐ</span>
-</div>
-@endif
+
+                @if($order->discount_amount > 0)
+                <div class="d-flex justify-content-between">
+                    <span class="text-success">Giảm giá:</span>
+                    <span class="text-success">-{{ number_format($order->discount_amount) }} VNĐ</span>
+                </div>
+                @endif
+
                 <p><strong>💰 Tổng tiền sản phẩm:</strong>
                     <span class="text-danger fw-bold">{{ number_format($itemsTotal, 0, ',', '.') }} VNĐ</span>
                 </p>
@@ -76,17 +102,18 @@
 
                 <hr>
 
-
-
-
                 <div class="d-flex justify-content-between align-items-center">
- 
-
-                <p><strong>📦 Trạng thái:</strong>
-                    <span class="badge {{ $badgeClasses[$order->status] ?? 'bg-dark' }}">
-                        {{ $statusLabels[$order->status] ?? 'Không xác định' }}
-                    </span>
-                </p>
+                    <p><strong>📦 Trạng thái đơn hàng:</strong>
+                        <span class="badge {{ $badgeClasses[$order->status] ?? 'bg-dark' }}">
+                            {{ $statusLabels[$order->status] ?? 'Không xác định' }}
+                        </span>
+                    </p>
+                    
+                    {{-- Hiển thị tổng tiền cuối cùng --}}
+                    <p class="fs-5 fw-bold text-primary">
+                        💵 Tổng thanh toán: {{ number_format($finalTotal, 0, ',', '.') }} VNĐ
+                    </p>
+                </div>
             </div>
 
             {{-- Danh sách sản phẩm --}}
@@ -118,7 +145,7 @@
                                 <div class="mt-1">
                                     <span>Đơn giá:</span>
                                     <span class="text-dark">{{ number_format($item->unit_price, 0, ',', '.') }}₫</span> |
-                                    <span class="text-danger fw-bold">Tổng: {{ number_format($order->total_amount) }} VNĐ</span>
+                                    <span class="text-danger fw-bold">Thành tiền: {{ number_format($item->unit_price * $item->quantity, 0, ',', '.') }} VNĐ</span>
                                 </div>
                             </div>
 
@@ -165,7 +192,8 @@
                     </button>
                 </form>
 
-                @if(in_array($order->status, ['pending', 'approved']))
+                {{-- Chỉ cho phép hủy đơn hàng nếu chưa thanh toán và ở trạng thái pending/approved --}}
+                @if(in_array($order->status, ['pending', 'approved']) && $order->status != 'paid')
                     <form method="POST" action="{{ route('admin.orders.cancel', $order->id) }}">
                         @csrf
                         @method('PUT')
@@ -173,6 +201,13 @@
                             <i class="bi bi-x-circle"></i> Hủy đơn hàng
                         </button>
                     </form>
+                @endif
+
+                {{-- Nút thanh toán lại nếu đơn hàng thất bại --}}
+                @if($order->status == 'failed')
+                    <a href="{{ route('checkout') }}" class="btn btn-primary">
+                        <i class="bi bi-credit-card"></i> Thanh toán lại
+                    </a>
                 @endif
             </div>
         </div>

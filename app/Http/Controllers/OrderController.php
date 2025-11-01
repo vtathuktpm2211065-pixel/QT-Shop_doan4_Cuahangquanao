@@ -176,7 +176,6 @@ public function placeOrder(Request $request)
     if ($user && !Hash::check($request->confirm_password, $user->password)) {
         return response()->json(['error' => 'Mật khẩu không đúng.'], 403);
     }
-
     DB::beginTransaction();
     try {
         $selectedIds = $request->input('checkout_ids', []);

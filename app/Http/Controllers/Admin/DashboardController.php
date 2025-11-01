@@ -28,7 +28,7 @@ class DashboardController extends Controller
                 $stocks = ProductVariant::sum('stock_quantity');
        \Log::info('Basic counts: products=' . $products . ', vouchers=' . $vouchers . ', carts=' . $carts . ', orders=' . $orders . ', stocks=' . $stocks);
 
-            $allowedStatuses = ['pending', 'processing', 'paid', 'shipped', 'completed'];
+            $allowedStatuses = ['pending', 'processing', 'shipped', 'completed'];
             $currentMonth = Carbon::now()->format('Y-m'); // 2025-07
             $currentYear = Carbon::now()->year; // 2025
 

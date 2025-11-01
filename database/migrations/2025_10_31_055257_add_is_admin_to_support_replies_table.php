@@ -9,14 +9,18 @@ class AddIsAdminToSupportRepliesTable extends Migration
     public function up()
     {
         Schema::table('support_replies', function (Blueprint $table) {
-            $table->boolean('is_admin')->default(false)->after('phone');
+            if (!Schema::hasColumn('support_replies', 'is_admin')) {
+                $table->boolean('is_admin')->default(false)->after('phone');
+            }
         });
     }
 
     public function down()
     {
         Schema::table('support_replies', function (Blueprint $table) {
-            $table->dropColumn('is_admin');
+            if (Schema::hasColumn('support_replies', 'is_admin')) {
+                $table->dropColumn('is_admin');
+            }
         });
     }
 }

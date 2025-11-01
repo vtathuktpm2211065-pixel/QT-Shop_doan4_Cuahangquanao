@@ -510,67 +510,161 @@ $(document).ready(function () {
             $('#momo-form').submit();
         }, 1000);
     });
-
-    // Xử lý xác nhận trong modal (chỉ cho COD)
-    $('#confirmPlaceOrderBtn').click(function () {
-        const phone = $('#phone_number').val().trim();
-        const confirmPhone = $('#confirmPhone').val().trim();
-        let hasError = false;
-
-        $('#confirmPhoneError').addClass('d-none').text('');
-        $('#confirmPasswordError').addClass('d-none').text('');
-
-        if (!confirmPhone) {
-            $('#confirmPhoneError').removeClass('d-none').text('Vui lòng nhập lại số điện thoại.');
-            hasError = true;
-        } else if (phone !== confirmPhone) {
-            $('#confirmPhoneError').removeClass('d-none').text('Số điện thoại xác nhận không khớp.');
-            hasError = true;
-        }
-
-        @if(Auth::check())
-        const password = $('#confirmPassword').val().trim();
-        if (!password) {
-            $('#confirmPasswordError').removeClass('d-none').text('Vui lòng nhập mật khẩu.');
-            hasError = true;
-        }
-        @endif
-
-        if (hasError) return;
-
-        // Nếu validate thành công, submit form COD
-        submitCODOrder();
+// ✅ THÊM HÀM DEBUG
+function debugFormData(formData) {
+    console.log('=== DEBUG FORM DATA ===');
+    formData.forEach(item => {
+        console.log(item.name + ': ', item.value);
     });
+}
 
-    // Hàm xử lý COD
-    function submitCODOrder() {
-        const form = $('#checkout-form');
-        let formData = form.serializeArray();
-
-        @if(Auth::check())
-        const password = $('#confirmPassword').val().trim();
-        if (password) {
-            formData.push({ name: 'confirm_password', value: password });
-        }
-        @endif
-
-        const $btn = $('#submit-order-btn');
-        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...');
-
-        $.ajax({
-            url: form.attr('action'),
-            method: 'POST',
-            data: $.param(formData),
-            success: function(res) {
-                window.location.href = '/orders/' + res.order_id;
-            },
-            error: function(xhr) {
-                alert(xhr.responseJSON?.error || 'Lỗi xảy ra khi đặt hàng!');
-                $btn.prop('disabled', false).html('🛍️ Đặt hàng ngay (COD)');
-                bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal')).hide();
-            }
+// ✅ Hàm chuẩn bị dữ liệu địa chỉ - ĐÃ SỬA CHO ĐỊA CHỈ CŨ
+function prepareAddressData() {
+    const addressId = $('#address_id').val();
+    
+    console.log('=== DEBUG ADDRESS ===');
+    console.log('address_id:', addressId);
+    
+    // Nếu chọn địa chỉ cũ, KHÔNG set rỗng mà set giá trị mặc định
+    if (addressId) {
+        console.log('Using saved address, setting default address values');
+        
+        // ✅ THAY VÌ SET RỖNG, SET GIÁ TRỊ MẶC ĐỊNH
+        $('#province_name').val('Default Province');
+        $('#district_name').val('Default District');
+        $('#ward_name').val('Default Ward');
+        
+        return true;
+    } 
+    // Nếu chọn địa chỉ mới, đảm bảo có đủ thông tin
+    else {
+        const provinceName = $('#province option:selected').text()?.trim() || '';
+        const districtName = $('#district option:selected').text()?.trim() || '';
+        const wardName = $('#ward option:selected').text()?.trim() || '';
+        const detail = $('#detail').val()?.trim() || '';
+        
+        console.log('New address data:', {
+            province: provinceName,
+            district: districtName,
+            ward: wardName,
+            detail: detail
         });
+        
+        // Đảm bảo các trường hidden có giá trị
+        $('#province_name').val(provinceName);
+        $('#district_name').val(districtName);
+        $('#ward_name').val(wardName);
+        
+        // Validate địa chỉ mới
+        if (!provinceName || provinceName === 'Chọn tỉnh/thành') {
+            alert('⚠️ Vui lòng chọn tỉnh/thành.');
+            return false;
+        }
+        if (!districtName || districtName === 'Chọn quận/huyện') {
+            alert('⚠️ Vui lòng chọn quận/huyện.');
+            return false;
+        }
+        if (!wardName || wardName === 'Chọn xã/phường') {
+            alert('⚠️ Vui lòng chọn xã/phường.');
+            return false;
+        }
+        if (!detail) {
+            alert('⚠️ Vui lòng nhập địa chỉ chi tiết.');
+            return false;
+        }
+        
+        return true;
     }
+}
+    // Xử lý xác nhận trong modal (chỉ cho COD)
+// Xử lý xác nhận trong modal (chỉ cho COD)
+$('#confirmPlaceOrderBtn').click(function () {
+    const phone = $('#phone_number').val().trim();
+    const confirmPhone = $('#confirmPhone').val().trim();
+    let hasError = false;
+
+    $('#confirmPhoneError').addClass('d-none').text('');
+    $('#confirmPasswordError').addClass('d-none').text('');
+
+    if (!confirmPhone) {
+        $('#confirmPhoneError').removeClass('d-none').text('Vui lòng nhập lại số điện thoại.');
+        hasError = true;
+    } else if (phone !== confirmPhone) {
+        $('#confirmPhoneError').removeClass('d-none').text('Số điện thoại xác nhận không khớp.');
+        hasError = true;
+    }
+
+    @if(Auth::check())
+    const password = $('#confirmPassword').val().trim();
+    if (!password) {
+        $('#confirmPasswordError').removeClass('d-none').text('Vui lòng nhập mật khẩu.');
+        hasError = true;
+    }
+    @endif
+
+    if (hasError) return;
+
+    // ✅ THÊM DÒNG NÀY - Chuẩn bị dữ liệu địa chỉ
+    if (!prepareAddressData()) {
+        return;
+    }
+
+    // Nếu validate thành công, submit form COD
+    submitCODOrder();
+});
+
+    // Hàm xử lý COD - ĐÃ SỬA
+   function submitCODOrder() {
+    const form = $('#checkout-form');
+    let formData = form.serializeArray();
+
+    // ✅ Thêm payment_method
+    formData.push({ name: 'payment_method', value: 'cod' });
+
+    // Thêm confirm_password nếu đã đăng nhập
+    @if(Auth::check())
+    const password = $('#confirmPassword').val().trim();
+    if (password) {
+        formData.push({ name: 'confirm_password', value: password });
+    }
+    @else
+    // Thêm phone_confirm cho khách
+    const confirmPhone = $('#confirmPhone').val().trim();
+    if (confirmPhone) {
+        formData.push({ name: 'phone_confirm', value: confirmPhone });
+    }
+    @endif
+
+    const $btn = $('#submit-order-btn');
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...');
+
+    $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: $.param(formData),
+        success: function(res) {
+            window.location.href = '/orders/' + res.order_id;
+        },
+        error: function(xhr) {
+            let errorMessage = 'Lỗi xảy ra khi đặt hàng!';
+            
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMessage = xhr.responseJSON.error;
+            } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                // Hiển thị lỗi validation đầu tiên
+                const errors = xhr.responseJSON.errors;
+                const firstError = Object.values(errors)[0];
+                if (firstError && firstError[0]) {
+                    errorMessage = firstError[0];
+                }
+            }
+            
+            alert('❌ ' + errorMessage);
+            $btn.prop('disabled', false).html('🛍️ Đặt hàng ngay (COD)');
+            bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal')).hide();
+        }
+    });
+}
 
     // Hàm điền dữ liệu vào form thanh toán
     function fillPaymentForm(formType) {

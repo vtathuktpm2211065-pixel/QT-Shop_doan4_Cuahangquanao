@@ -59,12 +59,15 @@
                     @foreach ($orders as $order)
                         @php
                             $statusLabels = [
-                                'pending'   => ['Chờ duyệt', 'warning'],
-                                'approved'  => ['Đã duyệt', 'info'],
-                                'shipping'  => ['Đang giao hàng', 'primary'],
-                                'delivered' => ['Giao hàng thành công', 'success'],
-                                'cancelled' => ['Đã hủy', 'danger'],
-                            ];
+    'pending'   => ['Chờ duyệt', 'warning'],
+    'approved'  => ['Đã duyệt', 'info'],
+    'shipping'  => ['Đang giao hàng', 'primary'],
+    'delivered' => ['Giao hàng thành công', 'success'],
+    'cancelled' => ['Đã hủy', 'danger'],
+    'completed' => ['Hoàn thành', 'success'],
+   
+];
+
                             $currentStatus = $statusLabels[$order->status] ?? ['Không xác định', 'secondary'];
                         @endphp
 

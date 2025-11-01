@@ -302,12 +302,14 @@ Route::post('/vnpay_payment', [PaymentController::class, 'vnpay_payment'])
     ->name('vnpay.payment');
     Route::post('/momo_payment', [MomoController::class, 'momo_payment'])
     ->name('momo_payment');
-    
+    Route::post('/momo/notify', [MomoController::class, 'notify'])->name('momo.notify');
+Route::get('/momo/return', [MomoController::class, 'return'])->name('momo.return');
 
 // Callback từ VNPay (luôn là GET)
 Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
     ->name('vnpay.return');
-
+Route::post('/vnpay/payment', [PaymentController::class, 'vnpay_payment'])->name('vnpay.payment');
+Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('vnpay.return');
     Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class);
 });
