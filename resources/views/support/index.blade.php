@@ -168,6 +168,17 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
 
+             {{-- Gợi ý AI hỗ trợ --}}
+            @if($showAIPrompt ?? false)
+                <div class="alert alert-info text-center">
+                    <h6>💡 Trải nghiệm Trợ lý AI mới!</h6>
+                    <p>Nhận hỗ trợ nhanh chóng với trợ lý AI thông minh của chúng tôi</p>
+                    <a href="{{ route('support.ai') }}" class="btn btn-primary">
+                        <i class="fas fa-robot"></i> Trò chuyện với AI
+                    </a>
+                </div>
+            @endif
+
             @if($supportRequest)
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
@@ -466,7 +477,7 @@
                                     this.lastMessageId = result.reply.id;
                                     
                                     // Hiển thị thông báo
-                                    this.showAlert(result.message || 'Đã gửi tin nhắn thành công!', 'success');
+                                    this.showAlert(result.message || 'Đã gửi tin nhắn ', 'success');
                                     
                                     // Cuộn xuống dưới
                                     this.scrollToBottom();
@@ -475,7 +486,7 @@
                                 }
                             } catch (error) {
                                 console.error('Error:', error);
-                                this.showAlert('Có lỗi khi gửi tin nhắn', 'danger');
+                                this.showAlert('', 'danger');
                             } finally {
                                 this.isSubmitting = false;
                                 sendButton.disabled = false;

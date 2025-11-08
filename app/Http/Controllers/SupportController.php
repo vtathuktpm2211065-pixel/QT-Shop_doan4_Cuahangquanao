@@ -18,28 +18,30 @@ class SupportController extends Controller
     }
 
     public function index()
-    {
-        $supportRequest = null;
+{
+    $supportRequest = null;
 
-        if (Auth::check()) {
-            // Người dùng đã đăng nhập → lấy theo user_id
-            $supportRequest = SupportRequest::where('user_id', Auth::id())
+    if (Auth::check()) {
+        $supportRequest = SupportRequest::where('user_id', Auth::id())
+            ->with(['replies.user'])
+            ->latest()
+            ->first();
+    } else {
+        $guestId = session('guest_support_request_id');
+
+        if ($guestId) {
+            $supportRequest = SupportRequest::where('id', $guestId)
                 ->with(['replies.user'])
-                ->latest()
                 ->first();
-        } else {
-            // Người dùng là khách → lấy theo session
-            $guestId = session('guest_support_request_id');
-
-            if ($guestId) {
-                $supportRequest = SupportRequest::where('id', $guestId)
-                    ->with(['replies.user'])
-                    ->first();
-            }
         }
-
-        return view('support.index', compact('supportRequest'));
     }
+
+    return view('support.index', [
+        'supportRequest' => $supportRequest,
+        'showAIPrompt' => true,
+    ]);
+}
+
 
     public function createForm()
     {
@@ -71,108 +73,92 @@ class SupportController extends Controller
         return redirect()->route('support.index')->with('success', 'Đã xoá yêu cầu hỗ trợ.');
     }
 
-    public function submit(Request $request)
-    {
-        if (Auth::check()) {
-            $data = $request->validate([
-                'message' => 'required|string|max:1000',
-                'type' => 'required|in:general,order,product,shipping,payment,technical,other',
-                'priority' => 'required|in:low,medium,high',
-                'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx|max:2048'
-            ]);
+public function submit(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required_if:user_id,null|string|max:255',
+        'email' => 'required_if:user_id,null|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'type' => 'required|string|max:255',
+        'priority' => 'required|string|max:255',
+        'message' => 'required|string|max:1000',
+        'attachment' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,gif,pdf,doc,docx',
+    ]);
 
-            $data['user_id'] = Auth::id();
-            $data['name']    = Auth::user()->name;
-            $data['email']   = Auth::user()->email;
-            $data['phone']   = Auth::user()->phone;
-        } else {
-            $data = $request->validate([
-                'name'    => 'required|string|max:255',
-                'email'   => 'required|email|max:255',
-                'phone'   => 'nullable|string|max:20',
-                'message' => 'required|string|max:1000',
-                'type' => 'required|in:general,order,product,shipping,payment,technical,other',
-                'priority' => 'required|in:low,medium,high',
-                'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx|max:2048'
-            ]);
-        }
-
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('support_attachments', $filename, 'public');
-            $attachmentPath = $path;
-        }
-
-        $supportData = [
-            'user_id' => $data['user_id'] ?? null,
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
-            'message' => $data['message'],
-            'type' => $data['type'],
-            'priority' => $data['priority'],
-            'attachment' => $attachmentPath,
-            'is_read' => false,
-            'status' => 'pending'
-        ];
-
-        $support = SupportRequest::create($supportData);
-
-        if (!Auth::check()) {
-            session(['guest_support_request_id' => $support->id]);
-        }
-
-        return redirect()->route('support.index')->with('success', 'Gửi yêu cầu thành công! Chúng tôi sẽ phản hồi sớm nhất.');
+    // Xử lý file đính kèm
+    $attachmentPath = null;
+    if ($request->hasFile('attachment')) {
+        $file = $request->file('attachment');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $attachmentPath = $file->storeAs('support_attachments', $fileName, 'public');
     }
 
-    // ✅ ĐÃ THAY BẰNG BẢN MỚI (tích hợp Firebase)
-   public function sendReply(Request $request, $id)
-{
-    $request->validate([
-        'reply' => 'required|string|max:1000',
-    ]);
-
-    $supportRequest = SupportRequest::findOrFail($id);
-
-    $replyData = [
-        'support_request_id' => $id,
+    // Tạo dữ liệu support request (LOẠI BỎ is_read)
+    $supportData = [
         'user_id' => Auth::check() ? Auth::id() : null,
-        'reply' => $request->reply,
-        'is_read' => false,
-        'is_admin' => false, // ✅ Đánh dấu đây là tin nhắn từ user
+        'name' => $validated['name'] ?? (Auth::check() ? Auth::user()->name : null),
+        'email' => $validated['email'] ?? (Auth::check() ? Auth::user()->email : null),
+        'phone' => $validated['phone'] ?? (Auth::check() ? Auth::user()->phone : null),
+        'message' => $validated['message'],
+        'type' => $validated['type'],
+        'priority' => $validated['priority'],
+        'attachment' => $attachmentPath,
+        'status' => 'pending' // Chỉ giữ lại status
     ];
 
-    $reply = SupportReply::create($replyData);
+    $support = SupportRequest::create($supportData);
 
-    // ✅ Gửi real-time notification đến admin
-    $this->sendRealTimeNotification($supportRequest, $reply);
+    if (!Auth::check()) {
+        session(['guest_support_request_id' => $support->id]);
+    }
 
-    return response()->json([
-        'success' => true,
-        'reply' => $reply,
-        'message' => 'Đã gửi tin nhắn '
-    ]);
+    return redirect()->route('support.index')->with('success', 'Gửi yêu cầu thành công! Chúng tôi sẽ phản hồi sớm nhất.');
 }
+            public function sendReply(Request $request, $id)
+        {
+            $request->validate([
+                'reply' => 'required|string|max:1000',
+            ]);
 
-// ✅ Gửi notification real-time
-private function sendRealTimeNotification($supportRequest, $reply)
-{
-    // Gửi notification đến admin
-    $this->firebaseService->sendToTopic('admin_support', 
-        '💬 Tin nhắn mới từ ' . $supportRequest->name,
-        substr($reply->reply, 0, 100) . '...',
-        [
-            'type' => 'new_support_message',
-            'support_request_id' => $supportRequest->id,
-            'user_id' => $supportRequest->user_id,
-            'timestamp' => now()->toISOString()
-        ]
-    );
-}
+            $supportRequest = SupportRequest::findOrFail($id);
 
-    // ✅ API để lấy tin nhắn mới (real-time polling)
+            $replyData = [
+                'support_request_id' => $id,
+                'user_id' => Auth::check() ? Auth::id() : null,
+                'reply' => $request->reply,
+                'is_read' => false,
+                'is_admin' => false, // ✅ Đánh dấu đây là tin nhắn từ user
+            ];
+
+            $reply = SupportReply::create($replyData);
+
+            // ✅ Gửi real-time notification đến admin
+            $this->sendRealTimeNotification($supportRequest, $reply);
+
+            return response()->json([
+                'success' => true,
+                'reply' => $reply,
+                'message' => 'Đã gửi tin nhắn '
+            ]);
+        }
+
+        // ✅ Gửi notification real-time
+        private function sendRealTimeNotification($supportRequest, $reply)
+        {
+            // Gửi notification đến admin
+            $this->firebaseService->sendToTopic('admin_support', 
+                '💬 Tin nhắn mới từ ' . $supportRequest->name,
+                substr($reply->reply, 0, 100) . '...',
+                [
+                    'type' => 'new_support_message',
+                    'support_request_id' => $supportRequest->id,
+                    'user_id' => $supportRequest->user_id,
+                    'timestamp' => now()->toISOString()
+                ]
+            );
+        }
+
+            // ✅ API để lấy tin nhắn mới (real-time polling)
     public function getNewMessages($id, Request $request)
 {
     $lastMessageId = $request->get('last_message_id', 0);
@@ -333,4 +319,31 @@ public function getUnreadAdminMessagesCount()
     
     return response()->json(['unread_count' => $unreadCount]);
 }
+
+// Thêm phương thức mới vào SupportController
+public function aiChat(Request $request)
+{
+    return view('support.ai-chat');
+}
+
+public function sendToAIChat(Request $request)
+{
+    // Chuyển hướng sang AI Chat thay vì hỗ trợ thủ công
+    $quickResponses = [
+        "Tôi có thể giúp bạn tra cứu đơn hàng. Vui lòng cho biết mã đơn hàng hoặc số điện thoại.",
+        "Bạn cần tư vấn sản phẩm nào? Tôi có thể đề xuất sản phẩm phù hợp.",
+        "Tôi sẽ giúp bạn kiểm tra thông tin. Hãy cho biết chi tiết yêu cầu."
+    ];
+    
+    return response()->json([
+        'ai_response' => $quickResponses[array_rand($quickResponses)],
+        'suggested_actions' => [
+            'tra_cuu_don_hang', 'tu_van_san_pham', 'hoi_dap_chinh_sach'
+        ]
+    ]);
+}
+
+
+
+
 }

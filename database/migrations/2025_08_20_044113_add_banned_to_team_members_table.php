@@ -6,22 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-   public function up()
-{
-    Schema::table('team_members', function (Blueprint $table) {
-        $table->boolean('banned')->default(false)->after('permissions'); 
-    });
-}
+    public function up(): void
+    {
+        if (Schema::hasTable('team_members')) {
+            Schema::table('team_members', function (Blueprint $table) {
+                if (!Schema::hasColumn('team_members', 'banned')) {
+                    $table->boolean('banned')->default(false)->after('permissions');
+                }
+            });
+        }
+    }
 
-public function down()
-{
-    Schema::table('team_members', function (Blueprint $table) {
-        $table->dropColumn('banned');
-    });
-}
-
-
+    public function down(): void
+    {
+        if (Schema::hasTable('team_members')) {
+            Schema::table('team_members', function (Blueprint $table) {
+                if (Schema::hasColumn('team_members', 'banned')) {
+                    $table->dropColumn('banned');
+                }
+            });
+        }
+    }
 };

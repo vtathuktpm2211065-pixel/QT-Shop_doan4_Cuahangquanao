@@ -1,8 +1,3 @@
-@extends('layouts.ai-chatbox')
-
-@section('title', 'QT SHOP - Home')
-
-@section('content')
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -26,14 +21,7 @@
 
     <!-- Nội dung chính -->
     <div class="content-wrapper p-3">
-        <!-- Nội dung header, navigation của bạn -->
-        
-        <!-- Main content -->
-        <main>
-            @yield('main-content')
-        </main>
-        
-        <!-- Footer của bạn -->
+        @yield('content')
     </div>
 
     <!-- Footer -->
@@ -52,4 +40,3 @@
 
 </body>
 </html>
-@endsection

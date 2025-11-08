@@ -123,10 +123,6 @@
           <a href="{{ route('admin.requests.index') }}" class="nav-link">
             <i class="fas fa-headset"></i>
             <p>Hỗ trợ khách hàng</p>
-          @if(isset($req) && $req->replies->where('is_admin', false)->where('is_read', false)->count() > 0)
-
-                                    <span style="position: absolute; top: -4px; right: -6px; font-size: 16px;">🔴</span>
-                                @endif
           </a>
         </li>
 <li class="nav-item">

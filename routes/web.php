@@ -47,6 +47,7 @@ use App\Http\Controllers\Admin\MomoController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AIChatController;
 
 // ✅ Các route authentication
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
@@ -326,3 +327,13 @@ Route::get('/api/notifications/check', [NotificationController::class, 'checkNew
 
 Route::post('/support/{id}/mark-all-read', [SupportController::class, 'markAllRepliesAsRead'])->name('support.mark-all-read');
 Route::get('/support/unread-count', [SupportController::class, 'getUnreadAdminMessagesCount'])->name('support.unread-count');
+
+// AI Chat Routes
+Route::get('/ai-chat', [AIChatController::class, 'aiChat'])->name('ai.chat');
+Route::post('/ai/chat', [AIChatController::class, 'chat'])->name('ai.chat.send');
+Route::get('/ai/chat/history/{sessionId}', [AIChatController::class, 'getChatHistory'])->name('ai.chat.history');
+
+// Cập nhật route support để tích hợp AI
+Route::get('/support', [SupportController::class, 'index'])->name('support.index');
+Route::get('/support/ai', [SupportController::class, 'aiChat'])->name('support.ai');
+Route::delete('/ai/chat/clear/{sessionId}', [AIChatController::class, 'clearChatHistory'])->name('ai.chat.clear');

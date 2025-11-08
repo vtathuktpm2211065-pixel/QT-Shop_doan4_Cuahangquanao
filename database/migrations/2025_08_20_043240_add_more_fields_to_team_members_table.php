@@ -8,31 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('team_members', function (Blueprint $table) {
-            if (!Schema::hasColumn('team_members', 'password')) {
-                $table->string('password')->after('email');
-            }
-            if (!Schema::hasColumn('team_members', 'role')) {
-                $table->string('role')->default('staff')->after('password');
-            }
-            if (!Schema::hasColumn('team_members', 'photo')) {
-                $table->string('photo')->nullable()->after('bio');
-            }
-            if (!Schema::hasColumn('team_members', 'permissions')) {
-                $table->json('permissions')->nullable()->after('photo');
-            }
-        });
+        if (Schema::hasTable('team_members')) {
+            Schema::table('team_members', function (Blueprint $table) {
+                if (!Schema::hasColumn('team_members', 'password')) {
+                    $table->string('password')->after('email');
+                }
+                if (!Schema::hasColumn('team_members', 'position')) {
+                    $table->string('position')->nullable();
+                }
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('team_members', function (Blueprint $table) {
-            $columns = ['password', 'role', 'photo', 'permissions'];
-            foreach ($columns as $col) {
-                if (Schema::hasColumn('team_members', $col)) {
-                    $table->dropColumn($col);
+        if (Schema::hasTable('team_members')) {
+            Schema::table('team_members', function (Blueprint $table) {
+                if (Schema::hasColumn('team_members', 'password')) {
+                    $table->dropColumn('password');
                 }
-            }
-        });
+                if (Schema::hasColumn('team_members', 'position')) {
+                    $table->dropColumn('position');
+                }
+            });
+        }
     }
 };

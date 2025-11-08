@@ -9,18 +9,24 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up()
-{
-    Schema::table('vouchers', function (Blueprint $table) {
-        $table->unsignedInteger('used_count')->default(0);
-    });
-}
+    public function up()
+    {
+        Schema::table('vouchers', function (Blueprint $table) {
+            if (!Schema::hasColumn('vouchers', 'used_count')) {
+                $table->unsignedInteger('used_count')->default(0);
+            }
+        });
+    }
 
-public function down()
-{
-    Schema::table('vouchers', function (Blueprint $table) {
-        $table->dropColumn('used_count');
-    });
-}
-
+    /**
+     * Reverse the migrations.
+     */
+    public function down()
+    {
+        Schema::table('vouchers', function (Blueprint $table) {
+            if (Schema::hasColumn('vouchers', 'used_count')) {
+                $table->dropColumn('used_count');
+            }
+        });
+    }
 };

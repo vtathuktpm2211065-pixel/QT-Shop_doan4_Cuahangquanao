@@ -365,14 +365,7 @@
             </select>
           </div>
 
-          <div class="mb-3">
-            <strong>Mức độ ưu tiên:</strong><br>
-            <select class="form-select form-select-sm" id="prioritySelect" onchange="updatePriority(this.value)">
-              <option value="low" {{ $request->priority == 'low' ? 'selected' : '' }}>🟢 Thấp</option>
-              <option value="medium" {{ $request->priority == 'medium' ? 'selected' : '' }}>🟡 Trung bình</option>
-              <option value="high" {{ $request->priority == 'high' ? 'selected' : '' }}>🔴 Cao</option>
-            </select>
-          </div>
+
 
           <div class="mb-3">
             <strong>Thống kê:</strong>

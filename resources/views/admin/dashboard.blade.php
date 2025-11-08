@@ -6,44 +6,41 @@
 
     <!-- Thống kê nhanh -->
     <div class="row text-white mb-4">
-    <div class="col-md-2">
-        <a href="{{ route('admin.san-pham.index') }}" class="text-white text-decoration-none">
-            <div class="p-3 bg-danger rounded">🛍️ {{ $products }}<br><small>Sản phẩm</small></div>
-        </a>
+        <div class="col-md-2">
+            <a href="{{ route('admin.san-pham.index') }}" class="text-white text-decoration-none">
+                <div class="p-3 bg-danger rounded">🛍️ {{ $products }}<br><small>Sản phẩm</small></div>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ route('admin.stock.index') }}" class="text-white text-decoration-none">
+                <div class="p-3 bg-warning rounded"><i class="fas fa-box"></i> {{$stocks }}<br><small> Kho</small></div>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ route('admin.san-pham.index') }}" class="text-white text-decoration-none">
+                <div class="p-3 bg-primary rounded">🎁 {{ $vouchers }}<br><small>Voucher</small></div>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ route('admin.carts.index') }}" class="text-white text-decoration-none">
+                <div class="p-3 bg-info rounded">🛒 {{ $carts }}<br><small>Giỏ hàng</small></div>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ route('admin.orders.index') }}" class="text-white text-decoration-none">
+                <div class="p-3 bg-success rounded">📦 {{ $orders }}<br><small>Đơn hàng</small></div>
+            </a>
+        </div>
     </div>
-    <div class="col-md-2">
-        <a href="{{ route('admin.stock.index') }}" class="text-white text-decoration-none">
-            <div class="p-3 bg-warning rounded"><i class="fas fa-box"></i> {{$stocks }}<br><small> Kho</small>
-</div>
-
-        </a>
-    </div>
-    <div class="col-md-2">
-        <a href="{{ route('admin.san-pham.index') }}" class="text-white text-decoration-none">
-            <div class="p-3 bg-primary rounded">🎁 {{ $vouchers }}<br><small>Voucher</small></div>
-        </a>
-    </div>
-    <div class="col-md-2">
-        <a href="{{ route('admin.carts.index') }}" class="text-white text-decoration-none">
-            <div class="p-3 bg-info rounded">🛒 {{ $carts }}<br><small>Giỏ hàng</small></div>
-        </a>
-    </div>
-    <div class="col-md-2">
-        <a href="{{ route('admin.orders.index') }}" class="text-white text-decoration-none">
-            <div class="p-3 bg-success rounded">📦 {{ $orders }}<br><small>Đơn hàng</small></div>
-        </a>
-    </div>
-</div>
-
 
     <div class="card mt-4 mb-4">
-    <div class="card-header">
-        Top 5 sản phẩm có doanh thu cao nhất tháng {{ \Carbon\Carbon::now()->format('m/Y') }}
+        <div class="card-header">
+            Top 5 sản phẩm có doanh thu cao nhất tháng {{ \Carbon\Carbon::now()->format('m/Y') }}
+        </div>
+        <div class="card-body">
+            <canvas id="topProductsChart" height="120"></canvas>
+        </div>
     </div>
-    <div class="card-body">
-        <canvas id="topProductsChart" height="120"></canvas>
-    </div>
-</div>
 
     <!-- Biểu đồ doanh thu theo tháng trong năm -->
     <div class="card">
@@ -54,6 +51,7 @@
     </div>
 </div>
 @endsection
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -81,11 +79,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     y: {
                         beginAtZero: true,
                         ticks: {
-    callback: function(value) {
-        return value.toLocaleString() + ' VND';
-    }
-}
-
+                            callback: function(value) {
+                                return value.toLocaleString() + ' VND';
+                            }
+                        }
                     }
                 }
             }
@@ -95,16 +92,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const yearlyCanvas = document.getElementById('yearlyChart');
     if (yearlyCanvas) {
         const yearlyCtx = yearlyCanvas.getContext('2d');
-       new Chart(yearlyCtx, {
-    type: 'line',
-    data: {
-        labels: {!! json_encode(array_map(function($m) { return 'Tháng ' . $m; }, range(1, 12)), JSON_UNESCAPED_UNICODE) !!},
-        datasets: [{
-            data: {!! json_encode(array_values($yearlySales)) !!},
-            borderColor: '#28a745',
-            fill: false
-        }]
-    },
+        new Chart(yearlyCtx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode(array_map(function($m) { return 'Tháng ' . $m; }, range(1, 12)), JSON_UNESCAPED_UNICODE) !!},
+                datasets: [{
+                    data: {!! json_encode(array_values($yearlySales)) !!},
+                    borderColor: '#28a745',
+                    fill: false
+                }]
+            },
             options: {
                 plugins: {
                     legend: { display: false },
@@ -113,12 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 scales: {
                     y: {
                         beginAtZero: true,
-                       ticks: {
-    callback: function(value) {
-        return value.toLocaleString() + ' VND';
-    }
-}
-
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' VND';
+                            }
+                        }
                     }
                 }
             }
