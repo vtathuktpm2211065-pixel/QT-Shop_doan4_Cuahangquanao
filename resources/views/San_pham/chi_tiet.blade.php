@@ -142,6 +142,26 @@
         </div>
     @endif
 </div>
+@if($relatedProducts->count())
+    <div class="container mt-5">
+        <h3 class="fw-bold mb-4 text-center">Sản phẩm cùng danh mục</h3>
+        <div class="row">
+            @foreach($relatedProducts as $item)
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ asset('images/' . $item->image_url) }}" 
+                             alt="{{ $item->name }}" class="img-fluid rounded shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ $item->name }}</h5>
+                            <p class="card-text text-danger">{{ number_format($item->price * 1000, 0, ',', '.') }} VNĐ</p>
+                            <a href="{{ route('chi_tiet', ['slug' => $item->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>

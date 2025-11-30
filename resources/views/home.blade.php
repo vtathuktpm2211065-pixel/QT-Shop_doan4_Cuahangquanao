@@ -13,6 +13,39 @@
       </ul>
   </div>
 @endif
+@if(isset($behaviorBased) && $behaviorBased->count())
+<h2 class="mt-4">Sản phẩm gợi ý cho bạn</h2>
+<div class="row">
+    @foreach($behaviorBased as $product)
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <img src="{{ asset('images/' . $product->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ $product->name }}</h5>
+                    <p class="card-text text-danger">{{ number_format($product->price*1000,0,',','.') }} VNĐ</p>
+                    <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
+<h2 class="mt-4">Sản phẩm nổi bật</h2>
+<div class="row">
+    @foreach($categoryBased as $product)
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+             <img src="{{ asset('images/' . $product->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ $product->name }}</h5>
+                    <p class="card-text text-danger">{{ number_format($product->price) }} đ</p>
+                   <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+
 
 <div class="site-blocks-cover" data-aos="fade">
   <div class="container">

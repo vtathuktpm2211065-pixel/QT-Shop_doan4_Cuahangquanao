@@ -48,7 +48,8 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AIChatController;
-
+use App\Http\Controllers\RecommendationController;
+use App\Http\Controllers\ProductReviewController;
 // ✅ Các route authentication
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
@@ -337,3 +338,8 @@ Route::get('/ai/chat/history/{sessionId}', [AIChatController::class, 'getChatHis
 Route::get('/support', [SupportController::class, 'index'])->name('support.index');
 Route::get('/support/ai', [SupportController::class, 'aiChat'])->name('support.ai');
 Route::delete('/ai/chat/clear/{sessionId}', [AIChatController::class, 'clearChatHistory'])->name('ai.chat.clear');
+
+Route::get('/recommendations/{user}/{product}', [RecommendationController::class, 'index']);
+Route::post('/reviews', [ProductReviewController::class, 'store'])->name('reviews.store');
+Route::get('/products/{id}/reviews', [ProductController::class, 'showReviews'])
+    ->name('products.showReviews');

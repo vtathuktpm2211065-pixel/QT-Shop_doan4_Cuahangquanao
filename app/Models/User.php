@@ -71,5 +71,9 @@ public function orders()
     {
         return $this->hasMany(Cart::class);
     }
+    public function interactions() {
+    return $this->hasMany(Interaction::class);
+}
+
 }
 

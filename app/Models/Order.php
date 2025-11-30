@@ -43,5 +43,8 @@ public function voucher()
 {
     return $this->belongsTo(Voucher::class);
 }
-
+   public function isDelivered()
+    {
+        return $this->status === "delivered";
+    }
 }

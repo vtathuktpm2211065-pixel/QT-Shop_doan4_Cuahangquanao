@@ -63,16 +63,64 @@ public function chi_tiet($slug)
         ->where('id', '!=', $product->id)
         ->take(4)
         ->get();
+        // Bước 6: Gợi ý sản phẩm (cùng danh mục, khác id)
+$recommendations = Product::where('category_id', $product->category_id)
+    ->where('id', '!=', $product->id)
+    ->take(8) // số lượng sản phẩm gợi ý
+    ->get();
 
-    return view('San_pham.chi_tiet', compact(
+
+   return view('San_pham.chi_tiet', compact(
+    'product',
+    'sizes',
+    'colors',
+    'variantStocks',
+    'relatedProducts',
+    'recommendations' 
+));
+
+}
+
+public function showReviews($id)
+{
+    $product = Product::with(['variants' => function ($query) {
+        $query->where('stock_quantity', '>', 0);
+    }])->findOrFail($id);
+
+    $sizes = $product->variants->pluck('size')->unique()->sort()->values()->all();
+    $orderedSizes = ['S', 'M', 'L'];
+    $sizes = array_values(array_filter($orderedSizes, fn($size) => in_array($size, $sizes)));
+
+    $colors = $product->variants->pluck('color')->unique()->sort()->values()->all();
+
+    $variantStocks = [];
+    foreach ($product->variants as $variant) {
+        $key = strtolower($variant->color) . '_' . strtoupper($variant->size);
+        $variantStocks[$key] = $variant->stock_quantity;
+    }
+
+    $relatedProducts = Product::where('category_id', $product->category_id)
+        ->where('id', '!=', $product->id)
+        ->take(4)
+        ->get();
+
+    $recommendations = Product::where('category_id', $product->category_id)
+        ->where('id', '!=', $product->id)
+        ->take(8)
+        ->get();
+
+    $reviews = $product->reviews;
+
+    return view('san_pham.chi_tiet', compact(
         'product',
         'sizes',
         'colors',
         'variantStocks',
-        'relatedProducts'
+        'relatedProducts',
+        'recommendations',
+        'reviews'
     ));
 }
-
 
 
 public function search(Request $request)

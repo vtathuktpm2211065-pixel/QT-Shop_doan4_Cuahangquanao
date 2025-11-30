@@ -44,5 +44,13 @@ class Product extends Model
 {
     return $this->hasMany(ProductReview::class);
 }
+public function interactions() {
+    return $this->hasMany(Interaction::class);
+}
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class, 'product_id', 'id');
+    }
+
 
 }
