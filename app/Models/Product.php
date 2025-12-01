@@ -51,6 +51,10 @@ public function interactions() {
     {
         return $this->hasMany(OrderItem::class, 'product_id', 'id');
     }
+public function views()
+{
+    return $this->hasMany(ProductView::class);
+}
 
 
 }

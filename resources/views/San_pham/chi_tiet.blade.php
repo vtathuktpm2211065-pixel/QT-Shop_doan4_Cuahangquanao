@@ -143,25 +143,80 @@
     @endif
 </div>
 @if($relatedProducts->count())
-    <div class="container mt-5">
-        <h3 class="fw-bold mb-4 text-center">Sản phẩm cùng danh mục</h3>
-        <div class="row">
-            @foreach($relatedProducts as $item)
-                <div class="col-md-3 mb-4">
-                    <div class="card h-100">
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0 text-center flex-grow-1">Sản phẩm cùng danh mục</h3>
+        <div class="section-line ms-3"></div>
+    </div>
+    <div class="row g-4">
+        @foreach($relatedProducts as $item)
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product-card card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="position-relative overflow-hidden" style="height: 220px;">
                         <img src="{{ asset('images/' . $item->image_url) }}" 
-                             alt="{{ $item->name }}" class="img-fluid rounded shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ $item->name }}</h5>
-                            <p class="card-text text-danger">{{ number_format($item->price * 1000, 0, ',', '.') }} VNĐ</p>
-                            <a href="{{ route('chi_tiet', ['slug' => $item->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
+                             alt="{{ $item->name }}" 
+                             class="card-img-top img-fluid h-100 object-fit-cover">
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <h5 class="card-title product-name fw-semibold mb-2 text-truncate" 
+                            title="{{ $item->name }}">
+                            {{ $item->name }}
+                        </h5>
+                        <div class="mt-auto">
+                            <p class="card-text product-price text-danger fw-bold fs-5 mb-2">
+                                {{ number_format($item->price*1000,0,',','.') }} ₫
+                            </p>
+                            <a href="{{ route('chi_tiet', ['slug' => $item->slug]) }}" 
+                               class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-eye me-2"></i>
+                                Xem chi tiết
+                            </a>
                         </div>
                     </div>
                 </div>
-            @endforeach
-        </div>
+            </div>
+        @endforeach
     </div>
+</div>
 @endif
+@if($recommendations->count())
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0 text-center flex-grow-1">Có thể bạn thích</h3>
+        <div class="section-line ms-3"></div>
+    </div>
+    <div class="row g-4">
+        @foreach($recommendations as $item)
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product-card card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="position-relative overflow-hidden" style="height: 220px;">
+                        <img src="{{ asset('images/' . $item->image_url) }}" 
+                             alt="{{ $item->name }}" 
+                             class="card-img-top img-fluid h-100 object-fit-cover">
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <h5 class="card-title product-name fw-semibold mb-2 text-truncate" 
+                            title="{{ $item->name }}">
+                            {{ $item->name }}
+                        </h5>
+                        <div class="mt-auto">
+                            <p class="card-text product-price text-danger fw-bold fs-5 mb-2">
+                                {{ number_format($item->price*1000,0,',','.') }} ₫
+                            </p>
+                            <a href="{{ route('chi_tiet', ['slug' => $item->slug]) }}" 
+                               class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-eye me-2"></i>
+                                Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>

@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
-@endpush@extends('layouts.app')
+@endpush
 
 @section('content')
 <div class="container-fluid">

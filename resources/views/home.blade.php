@@ -13,39 +13,6 @@
       </ul>
   </div>
 @endif
-@if(isset($behaviorBased) && $behaviorBased->count())
-<h2 class="mt-4">Sản phẩm gợi ý cho bạn</h2>
-<div class="row">
-    @foreach($behaviorBased as $product)
-        <div class="col-md-3 mb-4">
-            <div class="card h-100">
-                <img src="{{ asset('images/' . $product->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ $product->name }}</h5>
-                    <p class="card-text text-danger">{{ number_format($product->price*1000,0,',','.') }} VNĐ</p>
-                    <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
-                </div>
-            </div>
-        </div>
-    @endforeach
-</div>
-@endif
-<h2 class="mt-4">Sản phẩm nổi bật</h2>
-<div class="row">
-    @foreach($categoryBased as $product)
-        <div class="col-md-3 mb-4">
-            <div class="card h-100">
-             <img src="{{ asset('images/' . $product->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ $product->name }}</h5>
-                    <p class="card-text text-danger">{{ number_format($product->price) }} đ</p>
-                   <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" class="btn btn-primary mt-auto">Xem chi tiết</a>
-                </div>
-            </div>
-        </div>
-    @endforeach
-</div>
-
 
 <div class="site-blocks-cover" data-aos="fade">
   <div class="container">
@@ -90,39 +57,107 @@
     </div>
   </div>
 </div>
-
-<div class="site-section">
-  <div class="container">
-    <div class="row">
-      <div class="title-section mb-5 col-12">
-        <h2 class="text-uppercase">Sản phẩm phổ biến</h2>
-      </div>
+@if($behaviorBased->isNotEmpty())
+<div class="recommended-products mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Sản phẩm gợi ý cho bạn</h2>
+        <div class="section-line"></div>
     </div>
-    <div class="row">
-      @foreach($products as $product)
-      <div class="col-lg-4 col-md-6 item-entry mb-4">
-        <div class="product-card shadow-sm rounded overflow-hidden">
-          <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}">
-            <img src="{{ asset('images/' . $product->image_url) }}"
-                 alt="{{ $product->name }}"
-                 class="product-img">
-          </a>
-          <div class="p-3 text-center">
-            <h2 class="item-title fs-5 mb-2">
-              <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" class="text-dark text-decoration-none">
-                {{ $product->name }}
-              </a>
-            </h2>
-            <strong class="text-primary text-danger">
-              {{ number_format($product->price, 3, ',', '.') }}₫
-            </strong>
-          </div>
-        </div>
-      </div>
-      @endforeach
+    <div class="row g-4">
+        @foreach($behaviorBased as $product)
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product-card card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="position-relative overflow-hidden" style="height: 220px;">
+                        <img src="{{ asset('images/' . $product->image_url) }}" 
+                             alt="{{ $product->name }}" 
+                             class="card-img-top img-fluid h-100 object-fit-cover">
+                        <div class="product-badge position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-danger">Gợi ý</span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <h5 class="card-title product-name fw-semibold mb-2 text-truncate" 
+                            title="{{ $product->name }}">
+                            {{ $product->name }}
+                        </h5>
+                        <div class="mt-auto">
+                            <p class="card-text product-price text-danger fw-bold fs-5 mb-2">
+                                {{ number_format($product->price*1000,0,',','.') }} ₫
+                            </p>
+                            <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" 
+                               class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-eye me-2"></i>
+                                Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
     </div>
-  </div>
 </div>
+@endif
+
+@if($categoryBased->isNotEmpty())
+<div class="featured-products mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Sản phẩm nổi bật</h2>
+        <div class="section-line"></div>
+    </div>
+    <div class="row g-4">
+        @foreach($categoryBased as $product)
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product-card card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="position-relative overflow-hidden" style="height: 220px;">
+                        <img src="{{ asset('images/' . $product->image_url) }}" 
+                             alt="{{ $product->name }}" 
+                             class="card-img-top img-fluid h-100 object-fit-cover">
+                        <div class="product-badge position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-warning text-dark">Nổi bật</span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <h5 class="card-title product-name fw-semibold mb-2 text-truncate" 
+                            title="{{ $product->name }}">
+                            {{ $product->name }}
+                        </h5>
+                        <div class="mt-auto">
+                            <p class="card-text product-price text-danger fw-bold fs-5 mb-2">
+                                {{ number_format($product->price*1000,0,',','.') }} ₫
+                            </p>
+                            <a href="{{ route('chi_tiet', ['slug' => $product->slug]) }}" 
+                               class="btn btn-primary w-100 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-eye me-2"></i>
+                                Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+@if($recentProducts->count())
+<h3>Sản phẩm bạn vừa xem</h3>
+<div class="row g-4">
+    @foreach($recentProducts as $item)
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="card h-100">
+                <img src="{{ asset('images/'.$item->image_url) }}" class="card-img-top" style="height:220px;object-fit:cover;">
+                <div class="card-body">
+                    <h5>{{ $item->name }}</h5>
+                    <p class="text-danger">{{ number_format($item->price*1000,0,',','.') }} ₫</p>
+                    <a href="{{ route('chi_tiet',['slug'=>$item->slug]) }}" class="btn btn-primary">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
+
+
 <div class="site-section">
   <div class="container">
     <div class="row">
@@ -157,6 +192,127 @@
 
 
 <style>
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #2c3e50;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        border-radius: 2px;
+    }
+    
+    .section-line {
+        flex-grow: 1;
+        height: 2px;
+        background: #f8f9fa;
+        margin-left: 20px;
+    }
+    
+    .product-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .product-name {
+        font-size: 1rem;
+        color: #34495e;
+        height: 48px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .product-price {
+        font-size: 1.25rem;
+        color: #e74c3c !important;
+    }
+    
+    .product-badge .badge {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .btn-outline-primary, .btn-primary {
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid #3498db;
+        color: #3498db;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #3498db;
+        color: white;
+        transform: scale(1.02);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2ecc71);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #27ae60);
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    
+    @media (max-width: 768px) {
+        .col-lg-3 {
+            width: 50%;
+        }
+        
+        .product-name {
+            font-size: 0.9rem;
+            height: 40px;
+        }
+        
+        .product-price {
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .col-lg-3 {
+            width: 100%;
+        }
+        
+        .product-card {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+      }
   .product-img {
   width: 100%;
   height: 300px;
