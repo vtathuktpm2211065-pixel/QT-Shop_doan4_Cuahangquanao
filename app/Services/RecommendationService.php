@@ -20,97 +20,92 @@ class RecommendationService
 
         $recommendations = collect();
 
-        // 1. Behavior-based
         if ($userId) {
             $behaviorBased = $this->getBehaviorBasedRecommendations($userId, $limit);
             $recommendations = $recommendations->merge($behaviorBased);
         }
 
-        // 2. Similar products
         if ($recommendations->count() < $limit) {
             $similar = $this->getSimilarProducts($limit - $recommendations->count());
             $recommendations = $recommendations->merge($similar);
         }
 
-        // 3. Category-based
         if ($recommendations->count() < $limit) {
             $categoryBased = $this->getCategoryBasedRecommendations($limit - $recommendations->count());
             $recommendations = $recommendations->merge($categoryBased);
         }
 
-        // 4. Trending (7 ngày gần nhất)
         if ($recommendations->count() < $limit) {
             $trending = $this->getTrendingProducts($limit - $recommendations->count());
             $recommendations = $recommendations->merge($trending);
         }
 
-        // 5. Top Rated
         if ($recommendations->count() < $limit) {
             $topRated = $this->getTopRatedProducts($limit - $recommendations->count());
             $recommendations = $recommendations->merge($topRated);
         }
 
-        // 6. Popular
         if ($recommendations->count() < $limit) {
             $popular = $this->getPopularProducts($limit - $recommendations->count());
             $recommendations = $recommendations->merge($popular);
         }
+if ($userId && $recommendations->count() < $limit) {
+    $collab = $this->getCollaborativeRecommendations($userId, $limit - $recommendations->count());
+    $recommendations = $recommendations->merge($collab);
+}
 
-        // 7. Fallback
+        
         if ($recommendations->count() < $limit) {
             $fallback = $this->getFallbackRecommendations($limit - $recommendations->count());
             $recommendations = $recommendations->merge($fallback);
         }
+      
+
 
         return $recommendations->unique('id')->take($limit);
     }
 
 
-    /* =================================================
-     |   1. Behavior-based Recommendation
-    ================================================= */
-    public function getBehaviorBasedRecommendations($userId, $limit = 8) 
-    {
-         $cartCategories = CartItem::where('user_id', $userId)
-        ->with('product')
+  
+   public function getBehaviorBasedRecommendations($userId, $limit = 8) 
+{
+    // Lấy category từ giỏ hàng
+    $cartCategories = CartItem::where('user_id', $userId)
+        ->with('variant.product')
         ->get()
-        ->pluck('product.category_id')
+        ->map(function($item){
+            return $item->variant->product->category_id ?? null;
+        })
         ->filter()
         ->unique()
         ->toArray();
 
-    // 2. Category từ review
+    // Lấy category từ sản phẩm user đã đánh giá
     $reviewCategories = ProductReview::where('user_id', $userId)
         ->with('product')
         ->get()
-        ->pluck('product.category_id')
+        ->map(function($r){
+            return $r->product->category_id ?? null;
+        })
         ->filter()
         ->unique()
         ->toArray();
 
-    // 3. Kết hợp
+    // Gộp 2 loại category
     $categories = array_unique(array_merge($cartCategories, $reviewCategories));
 
-    if (!empty($categories)) {
-        $excludedIds = ProductReview::where('user_id', $userId)
-            ->pluck('product_id')
-            ->toArray();
-
-        return Product::whereIn('category_id', $categories)
-            ->whereNotIn('id', $excludedIds)
-            ->inRandomOrder()
-            ->limit($limit)
-            ->get();
-    }
-
-        
+    // Nếu không có danh mục -> không có gợi ý theo hành vi
+    if (empty($categories)) {
         return collect();
     }
 
+    // Gợi ý các sản phẩm trong các danh mục này
+    return Product::whereIn('category_id', $categories)
+        ->inRandomOrder()
+        ->limit($limit)
+        ->get();
+}
 
-    /* =================================================
-     |   2. Similar Products
-    ================================================= */
     public function getSimilarProducts($limit = 6)
     {
         if (!Auth::check()) return collect();
@@ -133,9 +128,7 @@ class RecommendationService
     }
 
 
-    /* =================================================
-     |   3. Category-based
-    ================================================= */
+    
     public function getCategoryBasedRecommendations($limit = 6)
     {
         $popularCategoryIds = OrderItem::join('products', 'order_items.product_id', '=', 'products.id')
@@ -151,9 +144,6 @@ class RecommendationService
     }
 
 
-    /* =================================================
-     |   4. Trending Products
-    ================================================= */
   private function getTrendingProducts($limit = 6)
     {
         return Product::withCount([
@@ -167,9 +157,7 @@ class RecommendationService
     }
 
 
-    /* =================================================
-     |   5. Top Rated
-    ================================================= */
+   
   public function getTopRatedProducts($limit = 6)
     {
         return Product::withAvg('reviews', 'rating')
@@ -179,9 +167,7 @@ class RecommendationService
     }
 
 
-    /* =================================================
-     |   6. Popular Products
-    ================================================= */
+   
      public function getPopularProducts($limit = 6) 
     {
         return Product::withCount('orderItems')
@@ -191,14 +177,49 @@ class RecommendationService
     }
 
 
-    /* =================================================
-     |   7. Fallback Random
-    ================================================= */
+   
    private function getFallbackRecommendations($limit = 6)
     {
         return Product::inRandomOrder()
             ->limit($limit)
             ->get();
     }
-    
+    public function getCollaborativeRecommendations($userId, $limit = 6)
+{
+    // 1. Sản phẩm user này đã mua
+    $userProductIds = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->where('orders.user_id', $userId)
+        ->pluck('order_items.product_id')
+        ->unique()
+        ->toArray();
+
+    if (empty($userProductIds)) {
+        return collect();
+    }
+
+    // 2. Tìm user khác cũng mua cùng sản phẩm
+    $similarUsers = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->whereIn('order_items.product_id', $userProductIds)
+        ->where('orders.user_id', '!=', $userId)
+        ->pluck('orders.user_id')
+        ->unique()
+        ->toArray();
+
+    if (empty($similarUsers)) {
+        return collect();
+    }
+
+    // 3. Lấy các sản phẩm mà các user đó đã mua thêm
+    $recommendedProductIds = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->whereIn('orders.user_id', $similarUsers)
+        ->whereNotIn('order_items.product_id', $userProductIds)
+        ->pluck('order_items.product_id')
+        ->unique()
+        ->toArray();
+
+    return Product::whereIn('id', $recommendedProductIds)
+        ->limit($limit)
+        ->get();
+}
+
 }

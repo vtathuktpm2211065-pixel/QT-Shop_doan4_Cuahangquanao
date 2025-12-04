@@ -16,26 +16,66 @@ class HomeController extends Controller
 
     public function index()
     {
-     $recentViews = session()->get('recent_views', []);
-    $recentProducts = collect();
+      
+        $recentViews = session()->get('recent_views', []);
+        $recentProducts = collect();
 
-    if(!empty($recentViews)) {
-        $recentProducts = Product::whereIn('id', $recentViews)
-            ->orderByRaw("FIELD(id, " . implode(',', $recentViews) . ")") // giữ đúng thứ tự
-            ->get();
-    }
-        // --- 3. Các danh sách khác nếu muốn hiển thị ---
+        if (!empty($recentViews)) {
+            $recentProducts = Product::whereIn('id', $recentViews)
+                ->orderByRaw("FIELD(id, " . implode(',', $recentViews) . ")")
+                ->get();
+
+            
+            foreach ($recentProducts as $p) {
+                $p->source = 'recent';
+            }
+        }
+
+        
         $behaviorBased = $this->recService->getRecommendations(Auth::id(), 8);
-        $categoryBased  = $this->recService->getCategoryBasedRecommendations(8);
-        $popularProducts = $this->recService->getPopularProducts(6);
-        $mostRated       = $this->recService->getTopRatedProducts(6);
+        foreach ($behaviorBased as $p) {
+            $p->source = 'behavior';
+        }
 
-        return view('home', compact(
-             'recentProducts',
-            'behaviorBased',
-            'categoryBased',
-            'popularProducts',
-            'mostRated'
-        ));
+        $categoryBased = $this->recService->getCategoryBasedRecommendations(8);
+        foreach ($categoryBased as $p) {
+            $p->source = 'category';
+        }
+
+        $popularProducts = $this->recService->getPopularProducts(6);
+        foreach ($popularProducts as $p) {
+            $p->source = 'popular';
+        }
+
+        $mostRated = $this->recService->getTopRatedProducts(6);
+        foreach ($mostRated as $p) {
+            $p->source = 'top_rated';
+        }
+
+        $collaborative = $this->recService->getCollaborativeRecommendations(Auth::id(), 8);
+        foreach ($collaborative as $p) {
+            $p->source = 'collab';
+        }
+
+        $combined = collect()
+            ->merge($recentProducts)
+            ->merge($behaviorBased)
+            ->merge($categoryBased)
+            ->merge($popularProducts)
+            ->merge($mostRated)
+            ->merge($collaborative)
+            ->unique('id') 
+            ->take(20);   
+
+       return view('home', [
+    'recentProducts' => $recentProducts,
+    'behaviorBased'  => $behaviorBased,
+    'categoryBased'  => $categoryBased,
+    'popularProducts' => $popularProducts,
+    'mostRated' => $mostRated,
+    'collaborative' => $collaborative,
+    'combined' => $combined,
+]);
+
     }
 }
