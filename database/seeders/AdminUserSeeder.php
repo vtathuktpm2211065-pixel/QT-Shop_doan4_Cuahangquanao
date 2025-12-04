@@ -16,14 +16,14 @@ class AdminUserSeeder extends Seeder
         $staffRole = Role::firstOrCreate(['name' => 'staff']);
 
         // Tạo user admin
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@gmail.com'],
-            [
-                'name' => 'Admin',
-                'username' => 'admin',
-                'password' => Hash::make('QTSHOP12345@'),
-            ]
-        );
+            $admin = User::updateOrCreate(
+                ['email' => 'admin@gmail.com'],
+                [
+                    'name' => 'Admin',
+                    'username' => 'admin',
+                    'password' => Hash::make('QTSHOP12345@'),
+                ]
+            );
         $admin->syncRoles([$adminRole->name]); // gán duy nhất role admin
 
         // Tạo user staff

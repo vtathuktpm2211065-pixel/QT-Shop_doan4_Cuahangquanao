@@ -9,13 +9,14 @@ class VerifyFixedStructure extends Migration
 {
     public function up()
     {
-        $columns = DB::select('SHOW COLUMNS FROM support_requests');
-        echo "CẤU TRÚC BẢNG SUPPORT_REQUESTS SAU KHI SỬA:\n";
-        foreach ($columns as $column) {
-            echo "- {$column->Field} ({$column->Type})";
-            if ($column->Null === 'NO') echo " NOT NULL";
-            if ($column->Default) echo " DEFAULT '{$column->Default}'";
-            echo "\n";
+        try {
+            $columns = Schema::getColumnListing('support_requests');
+            echo "CẤU TRÚC BẢNG SUPPORT_REQUESTS SAU KHI SỬA:\n";
+            foreach ($columns as $column) {
+                echo "- {$column}\n";
+            }
+        } catch (\Exception $e) {
+            echo "Không thể liệt kê cấu trúc support_requests: " . $e->getMessage() . "\n";
         }
     }
 
