@@ -33,10 +33,21 @@ class DashboardController extends Controller
             $currentYear = Carbon::now()->year; // 2025
 
             // Top 5 sản phẩm
-            $topProductsQuery = OrderItem::whereHas('order', function ($query) use ($currentMonth, $allowedStatuses) {
-                $query->whereYear('created_at', substr($currentMonth, 0, 4))
-                      ->whereMonth('created_at', substr($currentMonth, 5, 2))
-                      ->whereIn('status', $allowedStatuses);
+            // Make date filtering driver-aware (sqlite doesn't support YEAR()/MONTH())
+            $driver = DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+            $topProductsQuery = OrderItem::whereHas('order', function ($query) use ($currentMonth, $allowedStatuses, $driver) {
+                if ($driver === 'sqlite') {
+                    $year = substr($currentMonth, 0, 4);
+                    $month = substr($currentMonth, 5, 2);
+                    $query->whereRaw("strftime('%Y', created_at) = ?", [$year])
+                          ->whereRaw("strftime('%m', created_at) = ?", [$month])
+                          ->whereIn('status', $allowedStatuses);
+                } else {
+                    $query->whereYear('created_at', substr($currentMonth, 0, 4))
+                          ->whereMonth('created_at', substr($currentMonth, 5, 2))
+                          ->whereIn('status', $allowedStatuses);
+                }
             })
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
@@ -72,13 +83,24 @@ class DashboardController extends Controller
             $chartData = $topProducts->isNotEmpty() ? $topProducts->pluck('revenue')->all() : [];
             Log::info('Chart data: labels=' . json_encode($chartLabels) . ', data=' . json_encode($chartData));
 
-            // Doanh thu theo tháng
-            $monthlyData = Order::whereYear('created_at', $currentYear)
-                ->whereIn('status', $allowedStatuses)
-                ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as total')
-                ->groupBy(DB::raw('MONTH(created_at)'))
-                ->pluck('total', 'month')
-                ->toArray();
+            // Doanh thu theo tháng (driver-aware)
+            if (isset($driver) && $driver === 'sqlite') {
+                // SQLite: use strftime for year/month
+                $monthlyData = Order::whereRaw("strftime('%Y', created_at) = ?", [$currentYear])
+                    ->whereIn('status', $allowedStatuses)
+                    ->selectRaw("strftime('%m', created_at) as month, SUM(total_amount) as total")
+                    ->groupBy(DB::raw("strftime('%m', created_at)"))
+                    ->pluck('total', 'month')
+                    ->toArray();
+            } else {
+                // MySQL / others: use MONTH()
+                $monthlyData = Order::whereYear('created_at', $currentYear)
+                    ->whereIn('status', $allowedStatuses)
+                    ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as total')
+                    ->groupBy(DB::raw('MONTH(created_at)'))
+                    ->pluck('total', 'month')
+                    ->toArray();
+            }
             Log::info('Monthly data:', $monthlyData);
 
             $yearlySales = array_fill(1, 12, 0);

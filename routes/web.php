@@ -50,6 +50,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\Admin\AITrainingController;
+
 // ✅ Các route authentication
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
@@ -300,17 +302,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('categories',AdminCategoryController::class);
 });
 
-Route::post('/vnpay_payment', [PaymentController::class, 'vnpay_payment'])
-    ->name('vnpay.payment');
-    Route::post('/momo_payment', [MomoController::class, 'momo_payment'])
-    ->name('momo_payment');
-    Route::post('/momo/notify', [MomoController::class, 'notify'])->name('momo.notify');
+Route::post('/vnpay/payment', [PaymentController::class, 'vnpay_payment'])->name('vnpay.payment');
+Route::post('/momo_payment', [MomoController::class, 'momo_payment'])->name('momo_payment');
+Route::post('/momo/notify', [MomoController::class, 'notify'])->name('momo.notify');
 Route::get('/momo/return', [MomoController::class, 'return'])->name('momo.return');
 
 // Callback từ VNPay (luôn là GET)
-Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])
-    ->name('vnpay.return');
-Route::post('/vnpay/payment', [PaymentController::class, 'vnpay_payment'])->name('vnpay.payment');
 Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('vnpay.return');
     Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class);
@@ -328,6 +325,8 @@ Route::get('/api/notifications/check', [NotificationController::class, 'checkNew
 
 Route::post('/support/{id}/mark-all-read', [SupportController::class, 'markAllRepliesAsRead'])->name('support.mark-all-read');
 Route::get('/support/unread-count', [SupportController::class, 'getUnreadAdminMessagesCount'])->name('support.unread-count');
+Route::get('/support/{id}/chat-data', [SupportController::class, 'getChatData'])->name('support.chat.data');
+Route::get('/support/ai/history', [SupportController::class, 'getAIChatHistory'])->name('support.ai.history');
 
 // AI Chat Routes
 Route::get('/ai-chat', [AIChatController::class, 'aiChat'])->name('ai.chat');
@@ -343,3 +342,42 @@ Route::get('/recommendations/{user}/{product}', [RecommendationController::class
 Route::post('/reviews', [ProductReviewController::class, 'store'])->name('reviews.store');
 Route::get('/products/{id}/reviews', [ProductController::class, 'showReviews'])
     ->name('products.showReviews');
+
+// routes/admin.php
+
+// ĐÚNG: Route AI Training phải nằm BÊN TRONG prefix 'admin'
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // ⭐⭐ QUAN TRỌNG: Đặt AI Training vào đây
+    Route::prefix('ai-training')->name('ai-training.')->group(function () {
+        Route::get('/', [AITrainingController::class, 'index'])->name('index');  // URL: /admin/ai-training
+        Route::post('/upload-excel', [AITrainingController::class, 'uploadExcel'])->name('upload');
+         Route::get('/edit/{id}', [AITrainingController::class, 'edit'])->name('edit'); 
+        Route::post('/process-import', [AITrainingController::class, 'processImport'])->name('process-import');
+        Route::post('/search', [AITrainingController::class, 'search'])->name('search');
+        Route::put('/{id}', [AITrainingController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AITrainingController::class, 'destroy'])->name('destroy');
+        Route::get('/export', [AITrainingController::class, 'export'])->name('export');
+        Route::get('/statistics', [AITrainingController::class, 'statistics'])->name('statistics');
+    });
+});
+
+// API Routes cho AI Training
+Route::prefix('api/ai-training')->group(function () {
+    Route::get('/suggested-questions', [\App\Http\Controllers\API\AITrainingApiController::class, 'getSuggestedQuestions']);
+    Route::get('/search', [\App\Http\Controllers\API\AITrainingApiController::class, 'searchQuestions']);
+    Route::get('/statistics', [\App\Http\Controllers\API\AITrainingApiController::class, 'getStatistics']);
+    Route::get('/categories', [\App\Http\Controllers\API\AITrainingApiController::class, 'getCategories']);
+});
+
+// API cho AI Chat
+Route::post('/api/ai/chat', [\App\Http\Controllers\AIChatController::class, 'chatApi']);
+// Route cho AJAX edit
+Route::get('/admin/ai-training/{id}/edit', [AITrainingController::class, 'edit'])
+    ->name('admin.ai-training.edit');
+
+// Route cho edit đầy đủ (nếu vẫn cần)
+Route::get('/admin/ai-training/{id}/edit-full', [AITrainingController::class, 'editFull'])
+    ->name('admin.ai-training.edit-full');
+    

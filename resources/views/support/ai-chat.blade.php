@@ -1,4 +1,4 @@
-@extends('app')
+{{-- @extends('app')
 
 @section('content')
 <style>
@@ -946,4 +946,4 @@ document.addEventListener('DOMContentLoaded', function() {
     // Any additional initialization code
 });
 </script>
-@endsection
+@endsection --}}

@@ -21,7 +21,8 @@ class AdminUserSeeder extends Seeder
                 [
                     'name' => 'Admin',
                     'username' => 'admin',
-                    'password' => Hash::make('QTSHOP12345@'),
+                    // User model casts 'password' => 'hashed', so provide plain password here
+                    'password' => 'QTSHOP12345@',
                 ]
             );
         $admin->syncRoles([$adminRole->name]); // gán duy nhất role admin
@@ -29,10 +30,10 @@ class AdminUserSeeder extends Seeder
         // Tạo user staff
         $staff = User::updateOrCreate(
             ['email' => 'staff@gmail.com'],
-            [
+                [
                 'name' => 'Nhân viên',
                 'username' => 'staff',
-                'password' => Hash::make('12345678'),
+                'password' => '12345678',
             ]
         );
         $staff->syncRoles([$staffRole->name]); // gán duy nhất role staff

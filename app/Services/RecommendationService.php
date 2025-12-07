@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\ProductView;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RecommendationService
 {
@@ -110,6 +111,11 @@ if ($userId && $recommendations->count() < $limit) {
     {
         if (!Auth::check()) return collect();
 
+        // If product_views table doesn't exist yet (migrations not run), skip similar recommendations
+        if (!Schema::hasTable('product_views')) {
+            return collect();
+        }
+
         $lastView = ProductView::where('user_id', Auth::id())
             ->latest()
             ->with('product')
@@ -146,6 +152,14 @@ if ($userId && $recommendations->count() < $limit) {
 
   private function getTrendingProducts($limit = 6)
     {
+        // If product_views table doesn't exist, avoid running withCount which builds a subquery
+        if (!Schema::hasTable('product_views')) {
+            // Fallback: return newest products as a reasonable approximation for "trending"
+            return Product::orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
+        }
+
         return Product::withCount([
                 'views' => function($q) {
                     $q->where('created_at', '>=', now()->subDays(7));
