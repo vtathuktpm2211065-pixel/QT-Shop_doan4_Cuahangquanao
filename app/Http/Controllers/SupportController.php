@@ -122,7 +122,7 @@ class SupportController extends Controller
         return redirect()->route('support.index')->with('success', 'Gửi yêu cầu thành công! Chúng tôi sẽ phản hồi sớm nhất.');
     }
 
-   public function sendReply(Request $request, $id)
+  public function sendReply(Request $request, $id)
 {
     $request->validate([
         'reply' => 'nullable|string|max:1000',
@@ -130,6 +130,18 @@ class SupportController extends Controller
     ]);
 
     $supportRequest = SupportRequest::findOrFail($id);
+
+    // Kiểm tra quyền truy cập
+    if (Auth::check()) {
+        if ($supportRequest->user_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền gửi tin nhắn cho yêu cầu này.');
+        }
+    } else {
+        $guestId = session('guest_support_request_id');
+        if ($supportRequest->id != $guestId) {
+            abort(403, 'Bạn không có quyền gửi tin nhắn cho yêu cầu này.');
+        }
+    }
 
     // Process attachment
     $attachmentPath = null;
@@ -144,38 +156,47 @@ class SupportController extends Controller
         'user_id' => Auth::check() ? Auth::id() : null,
         'reply' => $request->reply ?? '',
         'is_read' => false,
-        'is_admin' => false,
+        'is_admin' => false, // QUAN TRỌNG: Tin nhắn từ người dùng
         'attachment' => $attachmentPath,
+        // Thêm thông tin người gửi cho khách không đăng nhập
+        'name' => Auth::check() ? Auth::user()->name : $supportRequest->name,
+        'email' => Auth::check() ? Auth::user()->email : $supportRequest->email,
+        'phone' => Auth::check() ? Auth::user()->phone : $supportRequest->phone,
     ];
 
     $reply = SupportReply::create($replyData);
     $reply->load('user');
 
-    // Send notification
+    // Cập nhật trạng thái yêu cầu thành "processing"
+    $supportRequest->update(['status' => 'processing']);
+
+    // Gửi notification đến admin (ĐÚNG CHỖ NÀY)
     $this->sendRealTimeNotification($supportRequest, $reply);
 
     return response()->json([
         'success' => true,
         'reply' => $reply,
-        'message' => 'Đã gửi tin nhắn'
+        'message' => 'Đã gửi tin nhắn thành công!'
     ]);
 }
 
     // ✅ Gửi notification real-time
-    private function sendRealTimeNotification($supportRequest, $reply)
-    {
-        // Gửi notification đến admin
-        $this->firebaseService->sendToTopic('admin_support', 
-            '💬 Tin nhắn mới từ ' . $supportRequest->name,
-            substr($reply->reply, 0, 100) . '...',
-            [
-                'type' => 'new_support_message',
-                'support_request_id' => $supportRequest->id,
-                'user_id' => $supportRequest->user_id,
-                'timestamp' => now()->toISOString()
-            ]
-        );
-    }
+// Đây là phương thức ĐÚNG trong SupportController.php
+private function sendRealTimeNotification($supportRequest, $reply)
+{
+    // Gửi notification đến admin khi người dùng gửi tin nhắn
+    $this->firebaseService->sendToTopic('admin_support', 
+        '💬 Tin nhắn mới từ ' . ($supportRequest->name ?? 'Khách hàng'),
+        substr($reply->reply, 0, 100) . '...',
+        [
+            'type' => 'new_support_message',
+            'support_request_id' => $supportRequest->id,
+            'user_id' => $supportRequest->user_id,
+            'timestamp' => now()->toISOString(),
+            'action' => 'user_replied'
+        ]
+    );
+}
 
     // ✅ API để lấy tin nhắn mới (real-time polling)
     public function getNewMessages($id, Request $request)
