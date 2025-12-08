@@ -87,44 +87,67 @@
 <div id="cart-alert" class="alert alert-success" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 9999;">
   Đã thêm vào giỏ hàng!
 </div>
-{{-- Phần đánh giá sản phẩm --}}
+{{-- Đánh giá sản phẩm --}}
 <div class="container py-5">
     <h3 class="fw-semibold mb-4 text-center">Đánh giá sản phẩm</h3>
 
     @if($product->reviews->count())
+        {{-- Tổng điểm trung bình --}}
+        <div class="bg-warning bg-opacity-10 p-4 rounded mb-4 text-center">
+            <h2 class="fw-bold mb-1">
+                {{ number_format($product->reviews->avg('rating'), 1) }} 
+                <small class="text-muted fs-6">/ 5.0</small>
+            </h2>
+            <div class="mb-2">
+                @for($i = 1; $i <= 5; $i++)
+                    <i class="fas fa-star {{ $i <= round($product->reviews->avg('rating')) ? 'text-warning' : 'text-muted' }}"></i>
+                @endfor
+            </div>
+            <small class="text-muted">{{ $product->reviews->count() }} đánh giá đã mua hàng</small>
+        </div>
+
+        {{-- Danh sách review --}}
         <div class="row">
             @foreach($product->reviews as $review)
-                <div class="col-md-6 col-lg-4 mb-4 d-flex">
-                    <div class="card border-0 shadow-sm w-100">
-                        <div class="card-body p-4 d-flex flex-column">
-                            {{-- Avatar + Tên --}}
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="{{ $review->user->avatar ? asset('storage/' . $review->user->avatar) : asset('images/default-avatar.jpg') }}"
-                                     class="rounded-circle me-3" width="50" height="50" alt="Avatar">
+                <div class="col-12 mb-4">
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            {{-- Tên + ngày --}}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">{{ $review->user->name }}</h6>
+                                <small class="text-muted">{{ $review->created_at->format('d/m/Y') }}</small>
+                            </div>
+
+                            {{-- Số sao --}}
+                            <div class="mb-2">
+                                <small class="text-warning">⭐ {{ $review->rating }}/5</small>
                                 <div>
-                                    <h6 class="mb-0">{{ $review->user->name }}</h6>
-                                    <small class="text-muted">⭐ {{ $review->rating }}/5</small>
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
+                                    @endfor
                                 </div>
                             </div>
 
-                            {{-- Sao --}}
-                            <div class="mb-2">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
-                                @endfor
-                            </div>
-
                             {{-- Nội dung --}}
-                            <p class="flex-grow-1">{{ $review->comment }}</p>
+                            <p>{{ $review->comment }}</p>
 
-                            {{-- Ảnh đính kèm --}}
-                            @if($review->image)
-                                <img src="{{ asset('storage/' . $review->image) }}"
-                                     class="img-fluid rounded border mt-2"
-                                     style="max-height: 150px; object-fit: cover;" alt="Ảnh đánh giá">
-                            @endif
 
-                            {{-- Phản hồi từ admin --}}
+{{-- Nội dung --}}
+<p class="flex-grow-1">{{ $review->comment }}</p>
+
+{{-- Ảnh đính kèm --}}
+@if($review->images && $review->images->count())
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        @foreach($review->images as $img)
+            <img src="{{ asset('storage/' . $img->image) }}"
+                 class="review-thumb rounded border"
+                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;">
+        @endforeach
+    </div>
+@endif
+
+                            {{-- Phản hồi từ shop --}}
                             @if($review->admin_reply)
                                 <div class="mt-3 p-3 bg-light border rounded">
                                     <strong>Phản hồi từ shop: </strong>
@@ -142,6 +165,19 @@
         </div>
     @endif
 </div>
+
+{{-- CSS nhỏ --}}
+<style>
+.review-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+</style>
+
 @if($relatedProducts->count())
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">

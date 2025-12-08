@@ -624,7 +624,7 @@
                         <h6>Chat với Hỗ trợ</h6>
                         <p>Phản hồi trong vài phút</p>
                     </div>
-                    @if($supportRequest && $unreadCount > 0)
+                   @if($supportRequest && $unreadCount > 0)
                         <span class="unread-badge">{{ $unreadCount }}</span>
                     @endif
                 </div>

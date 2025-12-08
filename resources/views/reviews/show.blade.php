@@ -1,54 +1,80 @@
-@extends('app')
+<div class="card shadow-sm mt-4">
+    <div class="card-body">
+        <h5 class="fw-semibold mb-3">Gửi đánh giá của bạn</h5>
 
-@section('title', 'Đánh giá sản phẩm')
+        <form action="{{ route('reviews.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
 
-@section('content')
-<div class="container py-5">
-    <div class="text-center mb-5">
-        <h2 class="fw-semibold"> {{ $product->name }}</h2>
+            <input type="hidden" name="product_id" value="{{ $product->id }}">
+
+            {{-- Rating --}}
+            <div class="mb-3">
+                <label class="form-label">Số sao:</label>
+                <select name="rating" class="form-select" required>
+                    <option value="">Chọn số sao</option>
+                    <option value="5">⭐⭐⭐⭐⭐</option>
+                    <option value="4">⭐⭐⭐⭐</option>
+                    <option value="3">⭐⭐⭐</option>
+                    <option value="2">⭐⭐</option>
+                    <option value="1">⭐</option>
+                </select>
+            </div>
+
+            {{-- Comment --}}
+            <div class="mb-3">
+                <label class="form-label">Nội dung:</label>
+                <textarea name="comment" rows="3" class="form-control" required></textarea>
+            </div>
+
+            {{-- Upload multiple images --}}
+            <div class="mb-3">
+                <label class="form-label">Hình ảnh (tối đa 5 ảnh)</label>
+                <input type="file" 
+                       name="images[]" 
+                       id="review-images" 
+                       multiple 
+                       accept="image/*" 
+                       class="form-control">
+            </div>
+
+            {{-- Preview --}}
+            <div id="preview-container" class="d-flex gap-2 flex-wrap mt-2"></div>
+
+            <button class="btn btn-primary mt-3">Gửi đánh giá</button>
+        </form>
     </div>
-
-    @if($product->reviews->count())
-        <div class="row">
-            @foreach($product->reviews as $review)
-                <div class="col-md-6 col-lg-4 mb-4 d-flex">
-                    <div class="card border-0 shadow-sm w-100">
-                        <div class="card-body p-4 d-flex flex-column">
-                            {{-- Avatar + Tên --}}
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="{{ $review->user->avatar ? asset('storage/' . $review->user->avatar) : asset('images/default-avatar.jpg') }}"
-                                     class="rounded-circle me-3" width="50" height="50" alt="Avatar">
-                                <div>
-                                    <h6 class="mb-0">{{ $review->user->name }}</h6>
-                                    <small class="text-muted">⭐ {{ $review->rating }}/5</small>
-                                </div>
-                            </div>
-
-                            {{-- Sao --}}
-                            <div class="mb-2">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
-                                @endfor
-                            </div>
-
-                            {{-- Nội dung --}}
-                            <p class="flex-grow-1">{{ $review->comment }}</p>
-
-                            {{-- Ảnh đính kèm --}}
-                            @if($review->image)
-                                <img src="{{ asset('storage/' . $review->image) }}"
-                                     class="img-fluid rounded border mt-2"
-                                     style="max-height: 150px; object-fit: cover;" alt="Ảnh đánh giá">
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    @else
-        <div class="text-center text-muted">
-            <p>Chưa có đánh giá nào cho sản phẩm này.</p>
-        </div>
-    @endif
 </div>
-@endsection
+
+{{-- Preview script --}}
+<script>
+    document.getElementById('review-images').addEventListener('change', function (e) {
+        const preview = document.getElementById('preview-container');
+        preview.innerHTML = ""; // clear
+
+        let files = Array.from(e.target.files);
+
+        // Giới hạn 5 ảnh
+        if (files.length > 5) {
+            alert("Bạn chỉ được chọn tối đa 5 ảnh!");
+            e.target.value = "";
+            return;
+        }
+
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                let img = document.createElement('img');
+                img.src = event.target.result;
+                img.className = "rounded border";
+                img.style.width = "100px";
+                img.style.height = "100px";
+                img.style.objectFit = "cover";
+
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+</script>
