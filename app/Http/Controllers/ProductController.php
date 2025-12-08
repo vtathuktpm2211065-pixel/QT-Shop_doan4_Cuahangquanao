@@ -44,6 +44,17 @@ public function chi_tiet($slug)
     $product = Product::with(['variants' => function ($query) {
         $query->where('stock_quantity', '>', 0);
     }])->where('slug', $slug)->firstOrFail();
+if (Auth::check()) {
+    \App\Models\ProductView::updateOrCreate(
+        [
+            'user_id' => Auth::id(),
+            'product_id' => $product->id
+        ],
+        [
+            'updated_at' => now()
+        ]
+    );
+}
 
     // 2. Lấy danh sách size còn hàng (S, M, L)
     $sizes = $product->variants->pluck('size')->unique()->sort()->values()->all();
