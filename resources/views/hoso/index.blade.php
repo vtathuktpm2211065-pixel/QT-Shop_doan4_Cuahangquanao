@@ -69,14 +69,16 @@
             <div class="mb-3">
                 <label class="form-label">Ảnh đại diện</label>
                 <input type="file" name="avatar" class="form-control" accept="image/*" onchange="previewAvatar(this)">
-                <div class="mt-3 text-center">
-                    <img id="avatarPreview"
-                         src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('default-avatar.png') }}"
-                         alt="Xem trước ảnh đại diện" class="rounded-circle shadow"
-                         width="120" height="120"
-                         style="object-fit: cover; border: 2px solid #95ff00;">
-                    <div class="small text-muted mt-1" id="avatarFileName"></div>
-                </div>
+               <div class="mt-3 text-center">
+    <img id="avatarPreview"
+         src="{{ $user->avatar ? Storage::url($user->avatar) : asset('default-avatar.png') }}"
+         alt="Xem trước ảnh đại diện" 
+         class="rounded-circle shadow"
+         width="120" 
+         height="120"
+         style="object-fit: cover; border: 2px solid #95ff00;">
+    <div class="small text-muted mt-1" id="avatarFileName"></div>
+</div>
             </div>
         </div>
 
