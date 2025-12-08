@@ -222,6 +222,7 @@
             <div class="modal-dialog">
                 <form method="POST" action="{{ route('reviews.store') }}" enctype="multipart/form-data" class="modal-content">
                     @csrf
+
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">Đánh giá: {{ $item->product->name }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -231,6 +232,7 @@
                         <input type="hidden" name="order_id" value="{{ $order->id }}">
                         <input type="hidden" name="product_id" value="{{ $item->product->id }}">
 
+                        {{-- Rating --}}
                         <label>⭐ Số sao:</label>
                         <select name="rating" class="form-select mb-3" required>
                             @for($i = 5; $i >= 1; $i--)
@@ -238,8 +240,18 @@
                             @endfor
                         </select>
 
+                        {{-- Comment --}}
                         <label>📝 Bình luận:</label>
                         <textarea name="comment" class="form-control mb-3"></textarea>
+
+                        {{-- Upload ảnh --}}
+                        <label class="fw-bold">📸 Hình ảnh (chọn nhiều ảnh)</label>
+                        <input type="file" name="images[]" multiple accept="image/*" 
+                               class="form-control mb-2 review-image-input" 
+                               data-preview="#preview-{{ $item->id }}">
+
+                        {{-- Preview ảnh --}}
+                        <div id="preview-{{ $item->id }}" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
 
                     <div class="modal-footer">
@@ -250,3 +262,24 @@
         </div>
     @endif
 @endforeach
+<script>
+document.querySelectorAll('.review-image-input').forEach(input => {
+    input.addEventListener('change', function() {
+        let previewBox = document.querySelector(this.dataset.preview);
+        previewBox.innerHTML = "";
+
+        [...this.files].forEach(file => {
+            let reader = new FileReader();
+            reader.onload = e => {
+                let img = document.createElement("img");
+                img.src = e.target.result;
+                img.classList.add("rounded", "border");
+                img.style.height = "70px";
+                img.style.objectFit = "cover";
+                previewBox.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+});
+</script>

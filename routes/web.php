@@ -381,3 +381,4 @@ Route::get('/admin/ai-training/{id}/edit', [AITrainingController::class, 'edit']
 Route::get('/admin/ai-training/{id}/edit-full', [AITrainingController::class, 'editFull'])
     ->name('admin.ai-training.edit-full');
     
+Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductReview;
+use App\Models\ProductReviewImage;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -19,238 +20,150 @@ class ProductReviewController extends Controller
             'comment' => 'nullable|string|max:1000',
             'product_id' => 'required|exists:products,id',
             'order_id' => 'required|exists:orders,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        // Kiểm tra xem user có sở hữu order này không
         $order = Order::where('id', $request->order_id)
-                     ->where('user_id', Auth::id())
-                     ->first();
+            ->where('user_id', Auth::id())
+            ->first();
 
         if (!$order) {
-            return redirect()->back()->with('error', 'Đơn hàng không tồn tại hoặc bạn không có quyền đánh giá đơn hàng này.');
+            return back()->with('error', 'Đơn hàng không hợp lệ.');
         }
 
-        // Kiểm tra xem order có chứa sản phẩm này không
         $orderItem = OrderItem::where('order_id', $request->order_id)
-                             ->where('product_id', $request->product_id)
-                             ->first();
+            ->where('product_id', $request->product_id)
+            ->first();
 
         if (!$orderItem) {
-            return redirect()->back()->with('error', 'Sản phẩm không có trong đơn hàng này.');
+            return back()->with('error', 'Sản phẩm không có trong đơn hàng.');
         }
 
-        // Kiểm tra xem order đã được giao hàng chưa
         if (!$order->isDelivered()) {
-            return redirect()->back()->with('error', 'Chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã được giao.');
+            return back()->with('error', 'Chỉ có thể đánh giá khi đã giao hàng.');
         }
 
-        // Kiểm tra xem đã review sản phẩm này trong order này chưa
         $existingReview = ProductReview::where('order_id', $request->order_id)
-                                     ->where('product_id', $request->product_id)
-                                     ->where('user_id', Auth::id())
-                                     ->first();
+            ->where('product_id', $request->product_id)
+            ->where('user_id', Auth::id())
+            ->first();
 
         if ($existingReview) {
-            return redirect()->back()->with('error', 'Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi.');
-        }
-
-        // Kiểm tra thời gian đánh giá (ví dụ: trong vòng 30 ngày kể từ khi giao hàng)
-        if ($order->delivered_at && $order->delivered_at->diffInDays(now()) > 30) {
-            return redirect()->back()->with('error', 'Thời gian đánh giá sản phẩm đã hết (30 ngày kể từ khi nhận hàng).');
+            return back()->with('error', 'Bạn đã đánh giá sản phẩm này rồi.');
         }
 
         try {
-            $review = new ProductReview();
-            $review->user_id = Auth::id();
-            $review->order_id = $request->order_id;
-            $review->product_id = $request->product_id;
-            $review->rating = $request->rating;
-            $review->comment = $request->comment;
-            $review->status = 'pending'; // hoặc 'approved' tùy cài đặt
+            $review = ProductReview::create([
+                'user_id' => Auth::id(),
+                'order_id' => $request->order_id,
+                'product_id' => $request->product_id,
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'status' => 'pending',
+            ]);
 
-            if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('review_images', 'public');
-                $review->image = $path;
-            }
+            // Lưu nhiều ảnh
+         if ($request->hasFile('images')) {
+    foreach ($request->file('images') as $img) {
+        $path = $img->store('review_images', 'public');
 
-            $review->save();
+        ProductReviewImage::create([
+            'review_id' => $review->id,
+            'image' => $path,
+        ]);
 
-            // Cập nhật rating trung bình cho sản phẩm
+}
+         }
             $this->updateProductRating($request->product_id);
 
-            return redirect()->back()->with('success', 'Đánh giá thành công! Cảm ơn bạn đã đóng góp ý kiến.');
+            return back()->with('success', 'Đánh giá thành công!');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return back()->with('error', 'Lỗi: ' . $e->getMessage());
         }
     }
 
-    public function showReviews($productId)
-    {
-        $product = Product::with(['reviews.user', 'reviews' => function($query) {
-            $query->where('status', 'approved')
-                  ->orderBy('created_at', 'desc');
-        }])->findOrFail($productId);
-
-        // Tính toán thống kê rating
-        $ratingStats = $this->getRatingStatistics($productId);
-        
-        // Lấy reviews gần đây
-        $recentReviews = ProductReview::with('user')
-            ->where('product_id', $productId)
-            ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        return view('reviews.show', compact('product', 'ratingStats', 'recentReviews'));
-    }
-
-    public function userReviews()
-    {
-        $reviews = ProductReview::with('product')
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return view('reviews.user-reviews', compact('reviews'));
-    }
-
-    public function edit($id)
-    {
-        $review = ProductReview::where('id', $id)
-                              ->where('user_id', Auth::id())
-                              ->firstOrFail();
-
-        // Chỉ cho phép chỉnh sửa trong vòng 24h
-        if ($review->created_at->diffInHours(now()) > 24) {
-            return redirect()->back()->with('error', 'Chỉ có thể chỉnh sửa đánh giá trong vòng 24 giờ sau khi đăng.');
-        }
-
-        return view('reviews.edit', compact('review'));
-    }
 
     public function update(Request $request, $id)
     {
         $review = ProductReview::where('id', $id)
-                              ->where('user_id', Auth::id())
-                              ->firstOrFail();
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-        // Chỉ cho phép chỉnh sửa trong vòng 24h
         if ($review->created_at->diffInHours(now()) > 24) {
-            return redirect()->back()->with('error', 'Đã hết thời gian chỉnh sửa đánh giá.');
+            return back()->with('error', 'Hết thời gian chỉnh sửa.');
         }
 
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:1000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
         try {
-            $review->rating = $request->rating;
-            $review->comment = $request->comment;
-            $review->status = 'pending'; // Đưa về trạng thái chờ duyệt nếu cần
+            $review->update([
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'status' => 'pending',
+            ]);
 
-            if ($request->hasFile('image')) {
-                // Xóa ảnh cũ nếu có
-                if ($review->image) {
-                    Storage::disk('public')->delete($review->image);
+            // Thêm ảnh mới
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $img) {
+                    $path = $img->store('review_images', 'public');
+
+                   ProductReviewImage::create([
+    'review_id' => $review->id,
+    'image' => $path,
+]);
+
                 }
-                
-                $path = $request->file('image')->store('review_images', 'public');
-                $review->image = $path;
             }
 
-            $review->save();
-
-            // Cập nhật lại rating trung bình
             $this->updateProductRating($review->product_id);
 
-            return redirect()->route('reviews.user')->with('success', 'Cập nhật đánh giá thành công!');
+            return redirect()->route('reviews.user')->with('success', 'Cập nhật thành công!');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return back()->with('error', 'Lỗi: ' . $e->getMessage());
         }
     }
+
 
     public function destroy($id)
     {
         $review = ProductReview::where('id', $id)
-                              ->where('user_id', Auth::id())
-                              ->firstOrFail();
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         try {
-            $productId = $review->product_id;
-            
-            // Xóa ảnh nếu có
-            if ($review->image) {
-                Storage::disk('public')->delete($review->image);
+            foreach ($review->images as $img) {
+                Storage::disk('public')->delete($img->image);
+                $img->delete();
             }
-            
+
+            $productId = $review->product_id;
+
             $review->delete();
 
-            // Cập nhật lại rating trung bình
             $this->updateProductRating($productId);
 
-            return redirect()->back()->with('success', 'Xóa đánh giá thành công!');
+            return back()->with('success', 'Xóa thành công!');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+            return back()->with('error', 'Lỗi: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Cập nhật rating trung bình cho sản phẩm
-     */
+
     private function updateProductRating($productId)
     {
-        $product = Product::find($productId);
-        
-        if ($product) {
-            $averageRating = ProductReview::where('product_id', $productId)
-                                         ->where('status', 'approved')
-                                         ->avg('rating');
-            
-            $product->average_rating = round($averageRating, 1);
-            $product->save();
-        }
-    }
-
-    /**
-     * Lấy thống kê rating cho sản phẩm
-     */
-    private function getRatingStatistics($productId)
-    {
-        return ProductReview::where('product_id', $productId)
-                           ->where('status', 'approved')
-                           ->selectRaw('
-                               COUNT(*) as total_reviews,
-                               AVG(rating) as average_rating,
-                               COUNT(CASE WHEN rating = 5 THEN 1 END) as five_star,
-                               COUNT(CASE WHEN rating = 4 THEN 1 END) as four_star,
-                               COUNT(CASE WHEN rating = 3 THEN 1 END) as three_star,
-                               COUNT(CASE WHEN rating = 2 THEN 1 END) as two_star,
-                               COUNT(CASE WHEN rating = 1 THEN 1 END) as one_star
-                           ')
-                           ->first();
-    }
-
-    /**
-     * API để lấy reviews với phân trang
-     */
-    public function apiReviews($productId, Request $request)
-    {
-        $reviews = ProductReview::with('user')
-            ->where('product_id', $productId)
+        $avg = ProductReview::where('product_id', $productId)
             ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->paginate($request->get('per_page', 10));
+            ->avg('rating');
 
-        return response()->json([
-            'reviews' => $reviews,
-            'rating_stats' => $this->getRatingStatistics($productId)
+        Product::where('id', $productId)->update([
+            'average_rating' => round($avg, 1),
         ]);
     }
 }

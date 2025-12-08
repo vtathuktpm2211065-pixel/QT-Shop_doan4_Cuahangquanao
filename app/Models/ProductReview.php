@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use App\Models\ProductReviewImage;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,4 +62,9 @@ class ProductReview extends Model
             })
             ->exists();
     }
+    public function images()
+{
+    return $this->hasMany(ProductReviewImage::class, 'review_id');
+}
+
 }
