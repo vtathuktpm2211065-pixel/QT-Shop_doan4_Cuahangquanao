@@ -113,6 +113,17 @@
     <p>Quản lý nhân viên</p>
   </a>
 </li>
+
+<li class="nav-item">
+    <a href="{{ route('admin.ai-training.index') }}" class="nav-link">
+        <i class="nav-icon fas fa-robot"></i>
+        <p>Training AI</p>
+    </a>
+</li>
+
+
+
+
 <li class="nav-item">
   <a href="{{ route('admin.vouchers.index') }}" class="nav-link">
     <i class="fas fa-ticket-alt"></i>
